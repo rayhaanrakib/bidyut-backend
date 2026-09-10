@@ -1,0 +1,70 @@
+{
+  "name": "bidyut-backend",
+  "version": "1.0.0",
+  "description": "Load Shedding & Power Outage Management System",
+  "developer": "rayhaanrakib.vercel.app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Power Outage Management System",
+    "Backend",
+    "Prisma_PostgreSQL"
+  ],
+  "author": "Rayhan",
+  "homepage": "https://github.com/rayhaanrakib/bidyut-backend#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayhaanrakib/bidyut-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rayhaanrakib/bidyut-backend/issues"
+  },
+  "license": "ISC",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
+    "@types/bcrypt": "^6.0.0",
+    "@types/bun": "latest",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^22.20.2",
+    "@types/nodemailer": "^8.0.1",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-local": "^1.0.38",
+    "@types/pg": "^8.23.1",
+    "prisma": "7.8.0"
+  },
+  "peerDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.8.0",
+    "@prisma/client": "7.8.0",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.11.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0",
+    "nodemailer": "^10.0.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.23.0",
+    "stripe": "^22.6.2",
+    "zod": "^3"
+  }
+}
