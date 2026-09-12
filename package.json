@@ -5,7 +5,21 @@
   "developer": "rayhaanrakib.vercel.app",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "bun --watch src/server.ts",
+    "build": "bunx prisma generate && bunx prisma migrate deploy && tsc --noEmit",
+    "start": "bun src/server.ts",
+    "format:check": "biome format ./src",
+    "format:fix": "biome format --write ./src",
+    "lint:check": "biome lint ./src",
+    "lint:fix": "biome lint --write ./src",
+    "check": "biome check ./src",
+    "check:fix": "biome check --write ./src",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "bunx prisma generate",
+    "db:migrate": "bunx prisma migrate dev",
+    "db:deploy": "bunx prisma migrate deploy",
+    "db:seed": "bun prisma/seed.ts",
+    "db:studio": "bunx prisma studio"
   },
   "keywords": [
     "Power Outage Management System",
@@ -45,8 +59,8 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "7.8.0",
-    "@prisma/client": "7.8.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
@@ -59,11 +73,12 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.3.0",
-    "nodemailer": "^10.0.3",
+    "nodemailer": "^10.0.9",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "pg": "^8.23.0",
+    "redis": "^6.2.1",
     "stripe": "^22.6.2",
     "zod": "^3"
   }
