@@ -1,7 +1,7 @@
-import express, { Application, Request, Response } from "express";
+import config from "@app/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import config from "@app/config";
+import express, { type Application, type Request, type Response } from "express";
 
 const app: Application = express();
 
@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // health check
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   res.status(200).json({ message: "Healthy" });
 });
 

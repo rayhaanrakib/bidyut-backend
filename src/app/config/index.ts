@@ -1,5 +1,5 @@
+import path from "node:path";
 import dotenv from "dotenv";
-import path from "path";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -58,8 +58,7 @@ export default {
     threshold: Number(process.env.BULK_OUTAGE_THRESHOLD) || 5,
     windowMinutes: Number(process.env.BULK_OUTAGE_WINDOW_MINUTES) || 15,
   },
-  weeklyCapMinutes:
-    Number(process.env.FEEDER_WEEKLY_LOAD_SHED_CAP_MINUTES) || 600,
+  weeklyCapMinutes: Number(process.env.FEEDER_WEEKLY_LOAD_SHED_CAP_MINUTES) || 600,
   slaBreachHours: Number(process.env.SLA_BREACH_HOURS) || 4,
   cronSecret: process.env.CRON_SECRET || "change_this_cron_secret",
 
