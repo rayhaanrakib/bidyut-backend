@@ -1,0 +1,57 @@
+model Zone {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String?
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  substations Substation[]
+}
+
+model Substation {
+  id        String   @id @default(uuid())
+  name      String
+  zoneId    String
+  zone      Zone     @relation(fields: [zoneId], references: [id])
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  feeders   Feeder[]
+
+  @@unique([zoneId, name]) // name unique within its zone
+  @@index([zoneId])
+}
+
+model Feeder {
+  id           String     @id @default(uuid())
+  name         String
+  substationId String
+  substation   Substation @relation(fields: [substationId], references: [id])
+  capacityMW   Int?
+  isDeleted    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  areas        Area[]
+  schedules    Schedule[]
+
+  @@unique([substationId, name]) // name unique within its substation
+  @@index([substationId])
+}
+
+model Area {
+  id        String   @id @default(uuid())
+  name      String
+  feederId  String
+  feeder    Feeder   @relation(fields: [feederId], references: [id])
+  latitude  Float?
+  longitude Float?
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  reports   OutageReport[]
+  schedules Schedule[]
+
+  @@unique([feederId, name]) // name unique within its feeder
+  @@index([feederId])
+}

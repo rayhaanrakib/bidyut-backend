@@ -1,0 +1,69 @@
+enum UserRole {
+  CUSTOMER
+  FIELD_TECHNICIAN
+  POWER_OPERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum UserCategory {
+  RESIDENTIAL
+  COMMERCIAL
+  HEALTHCARE
+  EDUCATION
+}
+
+enum AuthProvider {
+  CREDENTIAL
+  GOOGLE
+}
+
+enum TechnicianSpecialization {
+  LINE
+  TRANSFORMER
+  METERING
+  GENERATION
+}
+
+enum OperatorShift {
+  MORNING
+  EVENING
+  NIGHT
+}
+
+enum OutageStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
+enum ScheduleType {
+  PLANNED
+  MAINTENANCE
+  EMERGENCY
+}
+
+enum ScheduleStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentType {
+  PRIORITY_RESTORATION
+  SLA_SUBSCRIPTION
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}

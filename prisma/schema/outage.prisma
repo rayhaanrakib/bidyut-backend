@@ -1,0 +1,25 @@
+model OutageReport {
+  id             String       @id @default(uuid())
+  title          String?
+  description    String
+  customerId     String
+  customer       User         @relation("CustomerReports", fields: [customerId], references: [id])
+  areaId         String
+  area           Area         @relation(fields: [areaId], references: [id])
+  technicianId   String?
+  technician     User?        @relation("TechnicianTasks", fields: [technicianId], references: [id])
+  status         OutageStatus @default(PENDING)
+  isPriority     Boolean      @default(false)
+  isBulkIncident Boolean      @default(false)
+  slaBreached    Boolean      @default(false)
+  reportedAt     DateTime     @default(now())
+  assignedAt     DateTime?
+  resolvedAt     DateTime?
+  payments       Payment[]
+
+  @@index([areaId])
+  @@index([status])
+  @@index([reportedAt])
+  @@index([technicianId])
+  @@index([customerId])
+}

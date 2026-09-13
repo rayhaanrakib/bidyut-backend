@@ -1,0 +1,20 @@
+model Schedule {
+  id                 String         @id @default(uuid())
+  title              String
+  reason             String?
+  type               ScheduleType   @default(PLANNED)
+  status             ScheduleStatus @default(SCHEDULED)
+  feederId           String?
+  feeder             Feeder?        @relation(fields: [feederId], references: [id])
+  areaId             String?
+  area               Area?          @relation(fields: [areaId], references: [id])
+  startTime          DateTime
+  endTime            DateTime
+  notificationSentAt DateTime?
+  createdById        String?
+  createdBy          User?          @relation(fields: [createdById], references: [id])
+
+  @@index([feederId])
+  @@index([areaId])
+  @@index([startTime])
+}

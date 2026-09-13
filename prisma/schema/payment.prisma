@@ -1,0 +1,18 @@
+model Payment {
+  id                    String        @id @default(uuid())
+  transactionId         String        @unique
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id])
+  outageReportId        String?
+  outageReport          OutageReport? @relation(fields: [outageReportId], references: [id])
+  type                  PaymentType
+  amountPaisa           Int // all money stored as integer paisa (1 BDT = 100 paisa)
+  status                PaymentStatus @default(PENDING)
+  stripeSessionId       String?
+  stripePaymentIntentId String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

@@ -1,0 +1,26 @@
+model ActivityLog {
+  id        String   @id @default(uuid())
+  action    String // e.g. PAYMENT_COMPLETED, ROLE_CHANGED, OUTAGE_ASSIGNED
+  entity    String
+  entityId  String?
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity])
+  @@index([action])
+}
+
+model Notification {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  type   String
+  title  String
+  body   String
+  channel String @default("EMAIL")
+  sentAt DateTime @default(now())
+
+  @@index([userId])
+}

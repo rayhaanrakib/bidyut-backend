@@ -1,0 +1,51 @@
+model CustomerProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique // one-to-one with User
+  user              User     @relation(fields: [userId], references: [id])
+  nid               String? // national identity number
+  serviceAddress    String?
+  thana             String?
+  city              String?
+  postalCode        String?
+  landline          String?
+  emergencyContact  String?
+  preferredLanguage String? // "en" | "bn" — hints the email language
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model TechnicianProfile {
+  id              String                   @id @default(uuid())
+  userId          String                   @unique // one profile per technician, ever
+  user            User                     @relation(fields: [userId], references: [id])
+  employeeId      String                   @unique // e.g. DES-0142
+  specialization  TechnicianSpecialization @default(LINE)
+  experienceYears Int?
+  certification   String?
+  phone           String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+}
+
+model OperatorProfile {
+  id          String        @id @default(uuid())
+  userId      String        @unique
+  user        User          @relation(fields: [userId], references: [id])
+  employeeId  String        @unique // e.g. OPS-0031
+  designation String? // e.g. "Control Room Operator"
+  shift       OperatorShift @default(MORNING)
+  phone       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model AdminProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  employeeId  String   @unique // e.g. ADM-0002
+  designation String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
