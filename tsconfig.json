@@ -10,6 +10,17 @@
 
     "rootDir": "./",
     "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@src/*": ["src/*"],
+      "@app/*": ["src/app/*"],
+      "@lib/*": ["src/app/lib/*"],
+      "@middleware/*": ["src/app/middleware/*"],
+      "@modules/*": ["src/app/modules/*"],
+      "@templates/*": ["src/app/templates/*"],
+      "@utils/*": ["src/app/utils/*"],
+    },
 
     "strict": true,
     "esModuleInterop": true,
