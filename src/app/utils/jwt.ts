@@ -9,8 +9,15 @@ export const createAccessToken = (payload: JwtPayload) =>
 export const createRefreshToken = (payload: JwtPayload) =>
   jwt.sign(payload, config.jwt.refreshSecret, { expiresIn: config.jwt.refreshExpiresIn } as jwt.SignOptions);
 
-export function verifyAccessToken(token: string): JwtPayload {
-  return jwt.verify(token, config.jwt.accessSecret) as JwtPayload;
+
+export function verifyToken(
+  token: string,
+): { success: true; data: JwtPayload } | { success: false; error: string } {
+  try {
+    return { success: true, data: jwt.verify(token, config.jwt.accessSecret) as JwtPayload };
+  } catch (error: any) {
+    return { success: false, error: error?.message ?? 'Invalid token' };
+  }
 }
 
 export function verifyRefreshToken(token: string): JwtPayload {
