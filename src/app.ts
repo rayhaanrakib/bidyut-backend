@@ -1,7 +1,16 @@
 import config from "@app/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { type Application, type Request, type Response } from "express";
+import helmet from "helmet";
+import passport from "passport";
+import express, {
+  type Application,
+  type Request,
+  type Response,
+} from "express";
+import notFound from "@middleware/notFound";
+import globalErrorHandler from "@middleware/globalErrorHandler";
+import router from "./app/routes";
 
 const app: Application = express();
 
@@ -12,36 +21,72 @@ app.use(
     credentials: true,
   }),
 );
-// body parser
+// security
+app.use(helmet());
+app.use(cors({ origin: [config.server.frontendUrl], credentials: true }));
+app.use(cookieParser());
+
+// Stripe webhooks need the RAW body for signature verification.
+// This MUST be registered before express.json() and only for the webhook path.
+app.use("/api/v1/payments/webhook", express.raw({ type: "application/json" }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// cookie parser
-app.use(cookieParser());
+app.use(passport.initialize());
 
 // health check
 app.get("/health", (_req, res) => {
-  res.status(200).json({ message: "Healthy" });
+  res.status(200).json({ message: "Bidyut Backend is running" });
 });
 
-// home
+// Backend home / API information
 app.get("/", (req: Request, res: Response) => {
-  // more visual response
-  res.json({
+  res.status(200).json({
     status: "success",
-    message: "Welcome to Bidyut Backend!",
-    live_server: "Not Ready Yet",
-    api_documentation: "Not Ready Yet",
-    version: "1.0.0",
-    database: "PostgreSQL",
-    framework: "Express.js",
-    language: "TypeScript",
-    hosting: "Vercel",
-    timestamp: new Date().toISOString(),
-    browser: req.get("User-Agent"),
-    developer: "rayhaanrakib",
-    developer_portfolio: "https://rayhaanrakib.vercel.app",
+    message: "Welcome to Bidyut Backend! ⚡",
+
+    project: {
+      name: "Bidyut",
+      description: "A smart electricity management and monitoring platform.",
+      type: "REST API",
+      environment: process.env.NODE_ENV || "development",
+      version: "1.0.0",
+    },
+
+    server: {
+      status: "online",
+      framework: "Express.js",
+      runtime: "Node.js",
+      language: "TypeScript",
+      database: "PostgreSQL",
+      orm: "Prisma",
+      hosting: "Vercel",
+    },
+
+    api: {
+      version: "v1",
+      documentation: "Not Ready Yet",
+      health_check: "/health",
+    },
+
+    developer: {
+      username: "rayhaanrakib",
+      portfolio: "https://rayhaanrakib.vercel.app",
+    },
+
+    request: {
+      method: req.method,
+      path: req.originalUrl,
+      browser: req.get("User-Agent"),
+      timestamp: new Date().toISOString(),
+    },
   });
-  res.status(200);
 });
+
+// routes
+app.use("/api/v1", router);
+
+app.use(notFound);
+app.use(globalErrorHandler);
 
 export default app;
