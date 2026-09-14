@@ -1,5 +1,6 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as GoogleStrategy, Profile, VerifyCallback } from 'passport-google-oauth20';
 import bcrypt from 'bcrypt';
 import { prisma } from '@lib/prisma';
 import config from '@app/config';
@@ -26,5 +27,53 @@ passport.use(
     }
   }),
 );
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: config.google.clientId,
+      clientSecret: config.google.clientSecret,
+      callbackURL: config.google.callbackUrl,
+    },
+    async (_accessToken: string, _refreshToken: string, profile: Profile, done: VerifyCallback) => {
+      try {
+        const email = profile.emails?.[0]?.value;
+        if (!email) return done(null, false, { message: 'No email found on the Google account' });
+
+        const existing = await prisma.user.findUnique({ where: { email } });
+
+        if (existing) {
+          if (existing.isDeleted || existing.status === 'BLOCKED') {
+            return done(null, false, { message: 'This account is not allowed to log in' });
+          }
+          if (!existing.googleId) {
+            await prisma.user.update({ where: { id: existing.id }, data: { googleId: profile.id } });
+          }
+          return done(null, existing);
+        }
+
+        // first visit: auto-create the account (passwordless — Google is the credential)
+        const user = await prisma.user.create({
+          data: {
+            name: profile.displayName || 'Google User',
+            email,
+            passwordHash: null,
+            googleId: profile.id,
+            authProvider: 'GOOGLE',
+            emailVerified: true, // Google already verified this email
+            passwordRequired: false, // passwordless — they can add one via forgot-password later
+            role: 'CUSTOMER',
+          },
+        });
+        return done(null, user);
+      } catch (err) {
+        return done(err as Error);
+      }
+    },
+  ),
+);
+
+
+
 
 export default passport;

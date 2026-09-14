@@ -4,6 +4,7 @@ import * as authService from '@modules/auth/auth.service';
 import { setAuthCookies, clearAuthCookies } from '@utils/authCookie';
 import { tryCatchAsync } from '@utils/tryCatchAsync';
 import { User } from '@/generated/prisma/client';
+import config from '@app/config';
 
 export const register = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.register(req.body);
@@ -41,3 +42,20 @@ export const logout = tryCatchAsync(async (req: Request, res: Response) => {
   clearAuthCookies(res);
   res.json({ success: true, message: 'Logged out successfully' });
 });
+
+
+export const googleLogin = passport.authenticate('google', { scope: ['profile', 'email'], session: false });
+
+export const googleCallback = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('google', { session: false }, (err, user, info) => {
+    if (err || !user) {
+      console.error('Google login failed:', err?.message || info?.message);
+      return res.redirect(`${config.server.frontendUrl}/login?error=google_failed`);
+    }
+    const tokens = authService.issueTokens(user);
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+
+    const fragment = `#accessToken=${encodeURIComponent(tokens.accessToken)}&refreshToken=${encodeURIComponent(tokens.refreshToken)}`;
+    res.redirect(`${config.server.frontendUrl}/oauth/success${fragment}`);
+  })(req, res, next);
+};

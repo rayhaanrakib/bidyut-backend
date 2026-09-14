@@ -12,5 +12,7 @@ router.post('/login', validateRequest(loginSchema), authController.login);
 router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
 router.get('/me', checkAuth(), authController.me);
+router.get('/google', authController.googleLogin);
+router.get('/google/callback', authController.googleCallback);
 
 export default router;
