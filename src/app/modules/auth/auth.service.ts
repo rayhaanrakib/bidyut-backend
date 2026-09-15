@@ -10,6 +10,7 @@ import {
   createRefreshToken,
   verifyRefreshToken,
 } from "@utils/jwt";
+import { googleClient } from "@lib/google";
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -128,4 +129,57 @@ export async function resetPassword(input: { email: string; otp: string; newPass
   }).catch(() => null);
 
   return { message: 'Password updated successfully. Please log in again.' };
+}
+
+
+// ---------- google id-token login + signup (Postman) ----------
+export async function googleIdTokenLogin(input: { idToken: string }) {
+  let payload: { email?: string; sub?: string; name?: string } | undefined;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: input.idToken, audience: config.google.clientId });
+    payload = ticket.getPayload();
+  } catch {
+    throw new AppError(401, 'Invalid or expired Google ID token');
+  }
+  if (!payload?.email || !payload.sub) throw new AppError(400, 'Google account has no email');
+
+  // 1 — already linked? straight login
+  let user = await prisma.user.findFirst({ where: { googleId: payload.sub, isDeleted: false } });
+
+  // 2 — same email registered via OTP? link it (one user, one account)
+  if (!user) {
+    const existing = await prisma.user.findUnique({ where: { email: payload.email } });
+    if (existing) {
+      if (existing.isDeleted || existing.status === 'BLOCKED') throw new AppError(403, 'This account is not allowed to log in');
+      if (!existing.googleId) {
+        await prisma.user.update({ where: { id: existing.id }, data: { googleId: payload.sub } });
+      }
+      user = existing;
+    }
+  }
+
+  // 3 — brand-new Google email? create the account (Google is the credential) + 🎉 welcome
+  let isNewUser = false;
+  if (!user) {
+    isNewUser = true;
+    user = await prisma.user.create({
+      data: {
+        name: payload.name || 'Google User',
+        email: payload.email,
+        passwordHash: null,
+        googleId: payload.sub,
+        authProvider: 'GOOGLE',
+        emailVerified: true, // Google already verified this email
+        passwordRequired: false, // passwordless — they can add one via forgot-password later
+        role: 'CUSTOMER',
+      },
+    });
+    sendEmail(payload.email, 'Welcome to BIDYUT ⚡ Your account is ready', 'welcome', {
+      name: user.name,
+      frontendUrl: config.server.frontendUrl,
+    }).catch(() => null);
+  }
+
+  if (user.status === 'BLOCKED') throw new AppError(403, 'Your account has been blocked');
+  return { user: safeUser(user), ...issueTokens(user), isNewUser };
 }

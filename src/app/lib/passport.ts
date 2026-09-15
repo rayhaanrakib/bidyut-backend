@@ -1,6 +1,7 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from 'passport-google-oauth20';
+import type { Request } from 'express';
 import { sendEmail } from '@lib/nodemailer';
 import bcrypt from 'bcrypt';
 import { prisma } from '@lib/prisma';
@@ -35,11 +36,13 @@ passport.use(
       clientID: config.google.clientId,
       clientSecret: config.google.clientSecret,
       callbackURL: config.google.callbackUrl,
+      passReqToCallback: true, // gives us `params` — Google's raw token response (id_token lives there)
     },
-    async (_accessToken: string, _refreshToken: string, profile: Profile, done: VerifyCallback) => {
+    async (req: Request, _accessToken: string, _refreshToken: string, params: any, profile: Profile, done: VerifyCallback) => {
       try {
         const email = profile.emails?.[0]?.value;
         if (!email) return done(null, false, { message: 'No email found on the Google account' });
+        req.googleIdToken = params.id_token;
 
         const existing = await prisma.user.findUnique({ where: { email } });
 

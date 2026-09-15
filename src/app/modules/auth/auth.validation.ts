@@ -20,6 +20,8 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const googleLoginSchema = z.object({ idToken: z.string().min(20) }).strict();
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
