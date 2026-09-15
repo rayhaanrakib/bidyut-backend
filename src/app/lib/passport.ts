@@ -1,6 +1,7 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from 'passport-google-oauth20';
+import { sendEmail } from '@lib/nodemailer';
 import bcrypt from 'bcrypt';
 import { prisma } from '@lib/prisma';
 import config from '@app/config';
@@ -46,6 +47,7 @@ passport.use(
           if (existing.isDeleted || existing.status === 'BLOCKED') {
             return done(null, false, { message: 'This account is not allowed to log in' });
           }
+          // account linking: same user, second login method — remember the google id
           if (!existing.googleId) {
             await prisma.user.update({ where: { id: existing.id }, data: { googleId: profile.id } });
           }
@@ -65,6 +67,13 @@ passport.use(
             role: 'CUSTOMER',
           },
         });
+
+        // 🎉 welcome a BRAND-NEW Google user — linked logins (existing accounts) stay silent
+        sendEmail(email, 'Welcome to BIDYUT ⚡ Your account is ready', 'welcome', {
+          name: user.name,
+          frontendUrl: config.server.frontendUrl,
+        }).catch(() => null);
+
         return done(null, user);
       } catch (err) {
         return done(err as Error);
