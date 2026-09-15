@@ -9,5 +9,7 @@ const router = Router();
 
 router.patch('/me', checkAuth(), validateRequest(updateProfileSchema), userController.updateProfile);
 router.patch('/me/image', checkAuth(), upload.single('image'), userController.updateProfileImage);
+router.get('/me/profile', checkAuth(), userController.getMyProfile);
+router.patch('/me/profile', checkAuth(), userController.updateMyProfile);
 
 export default router;
