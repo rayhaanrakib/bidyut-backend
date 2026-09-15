@@ -3,7 +3,7 @@ import { upload } from '@lib/multer';
 import checkAuth from '@middleware/checkAuth';
 import validateRequest from '@middleware/validateRequest';
 import * as userController from '@modules/user/user.controller';
-import { adminUpdateRoleSchema, adminUpdateStatusSchema, updateProfileSchema } from '@modules/user/user.validation';
+import { adminUpdateRoleSchema, adminUpdateStatusSchema, staffCreateSchema, updateProfileSchema } from '@modules/user/user.validation';
 
 const router = Router();
 
@@ -17,4 +17,6 @@ router.get('/:id', checkAuth('ADMIN'), userController.getSingleUser);
 router.patch('/:id/role', checkAuth('ADMIN'), validateRequest(adminUpdateRoleSchema), userController.updateRole);
 router.patch('/:id/status', checkAuth('ADMIN'), validateRequest(adminUpdateStatusSchema), userController.updateStatus);
 router.delete('/:id', checkAuth('ADMIN'), userController.softDelete);
+router.post('/staff', checkAuth('ADMIN', 'POWER_OPERATOR'), validateRequest(staffCreateSchema), userController.createStaff);
+
 export default router;

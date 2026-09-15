@@ -61,3 +61,18 @@ export const adminUpdateRoleSchema = z.object({
 export const adminUpdateStatusSchema = z.object({
   status: z.enum(['ACTIVE', 'BLOCKED']),
 });
+
+
+
+export const staffCreateSchema = z.object({
+  name: z.string().min(2, 'Name is too short'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Give the new staff member at least 8 characters'),
+  role: z.enum(['ADMIN', 'POWER_OPERATOR', 'FIELD_TECHNICIAN']),
+  employeeId: z.string().min(2).max(20).optional(),
+  designation: z.string().max(80).optional(),
+  shift: z.enum(['MORNING', 'EVENING', 'NIGHT']).optional(),
+  phone: z.string().max(20).optional(),
+  specialization: z.enum(['LINE', 'TRANSFORMER', 'METERING', 'GENERATION']).optional(),
+  experienceYears: z.coerce.number().int().min(0).max(45).optional(),
+});

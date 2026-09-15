@@ -5,6 +5,8 @@ import { cloudinary } from '@lib/cloudinary';
 import config from '@app/config';
 import { logActivity } from '@utils/activity';
 import { sendEmail } from '@lib/nodemailer';
+import bcrypt from 'bcrypt';
+import { StaffCreateInput } from './user.interface';
 
 export async function updateProfile(userId: string, input: Record<string, unknown>) {
   return prisma.user.update({ where: { id: userId }, data: input });
@@ -76,7 +78,6 @@ export async function adminUpdateStatus(actorId: string, userId: string, status:
   const updated = await prisma.user.update({ where: { id: userId }, data: { status: status as any } });
   await logActivity(status === 'BLOCKED' ? 'USER_BLOCKED' : 'USER_UNBLOCKED', 'User', userId, actorId);
 
-  // 📩 governance email — the user hears this from US, not from a failed login
   sendEmail(
     user.email,
     status === 'BLOCKED' ? 'Your BIDYUT account has been blocked' : 'Your BIDYUT account is active again',
@@ -92,11 +93,80 @@ export async function softDeleteUser(actorId: string, userId: string) {
   if (!user) throw new AppError(404, 'User not found');
   if (user.role === 'ADMIN') throw new AppError(403, 'Admin accounts cannot be deleted');
 
-  // email must stay unique, so rename it — history is preserved, the account is unusable
   const updated = await prisma.user.update({
     where: { id: userId },
     data: { isDeleted: true, deletedAt: new Date(), email: `${user.email}.deleted.${Date.now()}`},
   });
   await logActivity('USER_SOFT_DELETED', 'User', userId, actorId);
   return updated;
+}
+
+
+
+
+const STAFF_CREATION_POLICY: Record<string, string[]> = {
+  ADMIN: ['ADMIN', 'POWER_OPERATOR'],
+  POWER_OPERATOR: ['FIELD_TECHNICIAN'],
+};
+
+function staffProfileCreate(input: StaffCreateInput) {
+  const prefix = input.role === 'FIELD_TECHNICIAN' ? 'DES' : input.role === 'POWER_OPERATOR' ? 'OPS' : 'ADM';
+  const employeeId = input.employeeId ?? `${prefix}-${Date.now().toString().slice(-6)}`;
+
+  if (input.role === 'FIELD_TECHNICIAN') {
+    return { technician: { create: {
+      employeeId,
+      specialization: (input.specialization ?? 'LINE') as any,
+      ...(input.phone ? { phone: input.phone } : {}),
+      ...(input.experienceYears !== undefined ? { experienceYears: input.experienceYears } : {}),
+    } } };
+  }
+  if (input.role === 'POWER_OPERATOR') {
+    return { operatorProfile: { create: {
+      employeeId,
+      ...(input.designation ? { designation: input.designation } : {}),
+      ...(input.shift ? { shift: input.shift as any } : {}),
+      ...(input.phone ? { phone: input.phone } : {}),
+    } } };
+  }
+  return { adminProfile: { create: {
+    employeeId,
+    ...(input.designation ? { designation: input.designation } : {}),
+    ...(input.phone ? { phone: input.phone } : {}),
+  } } };
+}
+
+export async function createStaff(actor: User, input: StaffCreateInput) {
+  const allowedRoles = STAFF_CREATION_POLICY[actor.role] ?? [];
+  if (!allowedRoles.includes(input.role)) {
+    throw new AppError(403, `A ${actor.role} cannot create a ${input.role} account`);
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  if (existing) throw new AppError(409, 'An account with this email already exists');
+
+  
+  const passwordHash = await bcrypt.hash(input.password, config.bcryptSaltRounds);
+  const user = await prisma.user.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: input.role as any,
+      authProvider: 'CREDENTIAL',
+      emailVerified: true,
+      passwordRequired: true,
+      mustChangePassword: true,
+      ...staffProfileCreate(input),
+    },
+    select: safeSelect,
+  });
+
+  await logActivity('STAFF_ACCOUNT_CREATED', 'User', user.id, actor.id, { role: input.role });
+  await sendEmail(input.email, '⚡ Your BIDYUT staff account', 'staff-welcome', {
+    name: input.name,
+    role: input.role,
+  }).catch(() => null);
+
+  return user;
 }

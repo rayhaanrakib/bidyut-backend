@@ -41,8 +41,7 @@ export const updateMyProfile = tryCatchAsync(async (req: Request, res: Response)
 export const getAllUsers = tryCatchAsync(async (req: Request, res: Response) => {
   const { page, limit, skip, sortBy, sortOrder, meta } = getPagination(req.query);
   const where: any = { isDeleted: false };
-  // separate handling by role: operators manage customers + technicians — the admin
-  // chain (ADMIN / POWER_OPERATOR) is invisible to them
+
   if (req.user?.role === 'POWER_OPERATOR') where.role = { in: ['CUSTOMER', 'FIELD_TECHNICIAN'] };
   if (req.query.search) {
     where.OR = [
@@ -79,4 +78,9 @@ export const updateStatus = tryCatchAsync(async (req: Request, res: Response) =>
 export const softDelete = tryCatchAsync(async (req: Request, res: Response) => {
   await userService.softDeleteUser(req.user!.id, String(req.params.id));
   res.json({ success: true, message: 'User deleted (soft)' });
+});
+
+export const createStaff = tryCatchAsync(async (req: Request, res: Response) => {
+  const user = await userService.createStaff(req.user!, req.body);
+  res.status(201).json({ success: true, message: `${user.role} account created`, data: { user } });
 });
