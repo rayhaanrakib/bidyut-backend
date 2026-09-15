@@ -53,15 +53,16 @@ const globalErrorHandler = (
     message = 'Service temporarily unavailable';
   }
 
-  // File upload error
-  else if (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    err.code === 'LIMIT_FILE_SIZE'
-  ) {
-    statusCode = 400;
-    message = 'Uploaded file is too large (max 2 MB)';
+  // File upload errors
+  else if (err instanceof Error && 'code' in err) {
+    if ((err as { code?: string }).code === 'LIMIT_FILE_SIZE') {
+      statusCode = 400;
+      message = 'Uploaded file is too large (max 2 MB)';
+    } else if (err.message.includes('Multipart: Boundary not found')) {
+      statusCode = 400;
+      message =
+        'Invalid upload request. Send Content-Type: multipart/form-data with a file in the "image" field (do NOT set multipart Content-Type manually when using FormData in the browser — let it set the boundary automatically).';
+    }
   }
 
   // Response
