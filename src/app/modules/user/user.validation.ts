@@ -54,5 +54,10 @@ export const adminProfileSchema = z
   })
   .refine((d) => Object.keys(d).length > 0, atLeastOne);
 
-// staff accounts are NEVER public — they are created by staff (5.4):
-// ADMIN → more ADMINs + POWER_OPERATORs · POWER_OPERATOR → FIELD_TECHNICIANs
+export const adminUpdateRoleSchema = z.object({
+  role: z.enum(['CUSTOMER', 'FIELD_TECHNICIAN', 'POWER_OPERATOR', 'ADMIN']),
+});
+
+export const adminUpdateStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'BLOCKED']),
+});

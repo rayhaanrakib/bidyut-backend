@@ -1,0 +1,15 @@
+<div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px;">
+  <h2 style="color: #f5a623; margin-top: 0;">⚡ BIDYUT — account notice</h2>
+  <p>Hello <%= name %>,</p>
+  <% if (blocked) { %>
+  <p>Your account has been <strong>blocked</strong> by the BIDYUT operations team. You cannot log in until it is reviewed.</p>
+  <div style="background: #fdecea; border-left: 4px solid #d93025; padding: 10px 14px; border-radius: 4px; color: #7a1c14; font-size: 13px;">
+    Believe this is a mistake? Reply to this email or contact support — an admin will review your account.
+  </div>
+  <% } else { %>
+  <p>Good news — your account has been <strong>unblocked</strong> and is fully active again. Welcome back! 🎉</p>
+  <p style="text-align: center; margin: 24px 0 4px;">
+    <a href="<%= frontendUrl %>/login" style="background: #f5a623; color: #fff; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Log in</a>
+  </p>
+  <% } %>
+</div>
