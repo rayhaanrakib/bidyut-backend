@@ -2,7 +2,7 @@ import { Router } from 'express';
 import validateRequest from '@middleware/validateRequest';
 import checkAuth from '@middleware/checkAuth';
 import * as authController from '@modules/auth/auth.controller';
-import { registerSchema, verifyOtpSchema, loginSchema } from '@modules/auth/auth.validation';
+import { registerSchema, verifyOtpSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '@modules/auth/auth.validation';
 
 const router = Router();
 
@@ -14,5 +14,7 @@ router.post('/logout', authController.logout);
 router.get('/me', checkAuth(), authController.me);
 router.get('/google', authController.googleLogin);
 router.get('/google/callback', authController.googleCallback);
+router.post('/forgot-password', validateRequest(forgotPasswordSchema), authController.forgotPassword);
+router.post('/reset-password', validateRequest(resetPasswordSchema), authController.resetPassword);
 
 export default router;

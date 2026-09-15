@@ -120,3 +120,28 @@ export async function refreshTokens(refreshToken?: string) {
     throw new AppError(401, "Session is no longer valid");
   return issueTokens(user);
 }
+
+
+// ---------- forgot / reset password ----------
+export async function forgotPassword(input: { email: string }) {
+  const user = await prisma.user.findUnique({ where: { email: input.email } });
+  if (!user || user.isDeleted) throw new AppError(404, 'No account found with this email');
+
+  const otp = generateOtp();
+  await otpSave(`reset:${input.email}`, otp);
+  await sendEmail(input.email, 'Reset your BIDYUT password', 'otp', { name: user.name, otp });
+  return { message: 'Password reset OTP sent to your email' };
+}
+
+export async function resetPassword(input: { email: string; otp: string; newPassword: string }) {
+  const savedOtp = await redis.get(`reset:${input.email}`);
+  if (!savedOtp || savedOtp !== input.otp) throw new AppError(400, 'Invalid or expired OTP');
+
+  const user = await prisma.user.findUnique({ where: { email: input.email } });
+  if (!user) throw new AppError(404, 'No account found with this email');
+
+  const passwordHash = await bcrypt.hash(input.newPassword, config.bcryptSaltRounds);
+  await prisma.user.update({ where: { email: input.email }, data: { passwordHash } });
+  await redis.del(`reset:${input.email}`);
+  return { message: 'Password updated successfully. Please log in again.' };
+}

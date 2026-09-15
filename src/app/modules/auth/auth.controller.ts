@@ -59,3 +59,14 @@ export const googleCallback = (req: Request, res: Response, next: NextFunction) 
     res.redirect(`${config.server.frontendUrl}/oauth/success${fragment}`);
   })(req, res, next);
 };
+
+
+export const forgotPassword = tryCatchAsync(async (req: Request, res: Response) => {
+  const result = await authService.forgotPassword(req.body);
+  res.json({ success: true, message: result.message });
+});
+
+export const resetPassword = tryCatchAsync(async (req: Request, res: Response) => {
+  const result = await authService.resetPassword(req.body);
+  res.json({ success: true, message: result.message });
+});
