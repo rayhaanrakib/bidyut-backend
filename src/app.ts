@@ -26,15 +26,13 @@ app.use(helmet());
 app.use(cors({ origin: [config.server.frontendUrl], credentials: true }));
 app.use(cookieParser());
 
-// Stripe webhooks need the RAW body for signature verification.
-// This MUST be registered before express.json() and only for the webhook path.
 app.use("/api/v1/payments/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
-// health check
+// Health Status
 app.get("/health", (_req, res) => {
   res.status(200).json({ message: "Bidyut Backend is running" });
 });
@@ -82,6 +80,13 @@ app.get("/", (req: Request, res: Response) => {
     },
   });
 });
+// Version Status
+app.get("/api/v1", (req: Request, res: Response) =>
+  res.json({
+    success: true,
+    message: "Backend API v1 is running successfully.",
+  }),
+);
 
 // routes
 app.use("/api/v1", router);

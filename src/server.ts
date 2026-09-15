@@ -3,6 +3,7 @@ import config from "@app/config";
 import { prisma } from "@lib/prisma";
 import { redis } from "@lib/redis";
 import { seed } from "@utils/seed";
+import { transporter } from "@lib/nodemailer";
 
 const PORT = config.server.port;
 
@@ -12,15 +13,25 @@ const main = async () => {
     console.log("✅ Connected to the database successfully.");
 
     try {
-      await redis.connect(); // node-redis does not auto-connect — boot owns the connection
+      await redis.connect();
       console.log("✅ Redis connected successfully.");
     } catch {
       console.warn(
         "⚠️ Redis unavailable — OTP/cache features degrade (server continues).",
       );
     }
-
-    await seed(); // creates demo accounts + grid data if missing
+    await seed();
+    
+    if (config.smtp.user && config.smtp.pass) {
+      try {
+        await transporter.verify();
+        console.log("✅ Nodemailer connected successfully.");
+      } catch {
+        console.warn(
+          "⚠️ SMTP unavailable — emails will be skipped (server continues).",
+        );
+      }
+    }
 
     app.listen(PORT, () => {
       console.log(

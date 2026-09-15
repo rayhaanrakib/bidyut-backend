@@ -3,8 +3,14 @@ export class AppError extends Error {
 
   constructor(statusCode: number, message: string, stack = '') {
     super(message);
+
+    this.name = 'AppError';
     this.statusCode = statusCode;
-    if (stack) this.stack = stack;
-    else Error.captureStackTrace(this, this.constructor);
+
+    if (stack) {
+      this.stack = stack;
+    } else {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 }
