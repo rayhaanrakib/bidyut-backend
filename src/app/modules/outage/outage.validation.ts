@@ -9,3 +9,7 @@ export const reportOutageSchema = z.object({
 export const updateStatusSchema = z.object({
   status: z.enum(['IN_PROGRESS', 'RESOLVED']),
 });
+
+export const assignSchema = z.object({
+  technicianId: z.string().uuid('technicianId must be a valid id'),
+});

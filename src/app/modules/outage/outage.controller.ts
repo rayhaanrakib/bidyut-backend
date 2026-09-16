@@ -23,3 +23,9 @@ export const updateStatus = tryCatchAsync(async (req: Request, res: Response) =>
   const report = await outageService.updateStatus(req.user!, req.params.id as string, req.body.status);
   sendResponse(res, 200, `Status updated to ${report.status}`, report);
 });
+
+
+export const assign = tryCatchAsync(async (req: Request, res: Response) => {
+  const report = await outageService.assignTechnician(req.user!, req.params.id as string, req.body.technicianId);
+  sendResponse(res, 200, 'Technician assigned', report);
+});

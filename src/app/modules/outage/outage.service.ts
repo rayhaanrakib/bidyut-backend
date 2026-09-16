@@ -96,3 +96,22 @@ export const updateStatus = async (actor: User, reportId: string, newStatus: str
   await logActivity(`OUTAGE_${newStatus}`, 'OutageReport', reportId, actor.id);
   return updated;
 };
+
+// assign technician to outage report - patch request
+export const assignTechnician = async (actor: User, reportId: string, technicianId: string) => {
+  const report = await prisma.outageReport.findUnique({ where: { id: reportId } });
+  if (!report) throw new AppError(404, 'Outage report not found');
+  if (report.status !== 'PENDING') throw new AppError(409, `Cannot assign — report is already ${report.status}`);
+
+  const technician = await prisma.user.findFirst({
+    where: { id: technicianId, role: 'FIELD_TECHNICIAN', isDeleted: false },
+  });
+  if (!technician) throw new AppError(404, 'Technician not found');
+
+  const updated = await prisma.outageReport.update({
+    where: { id: reportId },
+    data: { status: 'ASSIGNED', technicianId, assignedAt: new Date() },
+  });
+  await logActivity('OUTAGE_ASSIGNED', 'OutageReport', reportId, actor.id, { technicianId });
+  return updated;
+};
