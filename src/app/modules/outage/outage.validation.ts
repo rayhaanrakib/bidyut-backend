@@ -5,3 +5,7 @@ export const reportOutageSchema = z.object({
   title: z.string().min(3).max(100).optional(),
   description: z.string().min(10, 'Describe the problem in at least 10 characters'),
 });
+
+export const updateStatusSchema = z.object({
+  status: z.enum(['IN_PROGRESS', 'RESOLVED']),
+});

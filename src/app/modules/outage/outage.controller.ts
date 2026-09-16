@@ -17,3 +17,9 @@ export const getById = tryCatchAsync(async (req: Request, res: Response) => {
   const report = await outageService.getByIdScoped(req.user!, req.params.id as string);
   sendResponse(res, 200, 'Outage report retrieved', report);
 });
+
+
+export const updateStatus = tryCatchAsync(async (req: Request, res: Response) => {
+  const report = await outageService.updateStatus(req.user!, req.params.id as string, req.body.status);
+  sendResponse(res, 200, `Status updated to ${report.status}`, report);
+});
