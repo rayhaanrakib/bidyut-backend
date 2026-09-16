@@ -1,0 +1,11 @@
+<div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px;">
+  <h2 style="color: #f5a623;">⚡ BIDYUT — Payment Receipt</h2>
+  <p>Hi <%= name %>, your payment was successful.</p>
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr><td style="padding: 6px 0; color: #666;">Transaction ID</td><td style="text-align: right; font-weight: bold;"><%= transactionId %></td></tr>
+    <tr><td style="padding: 6px 0; color: #666;">Product</td><td style="text-align: right;"><%= type %></td></tr>
+    <tr><td style="padding: 6px 0; color: #666;">Amount</td><td style="text-align: right; font-weight: bold;">৳ <%= amountBDT %></td></tr>
+    <tr><td style="padding: 6px 0; color: #666;">Date</td><td style="text-align: right;"><%= date %></td></tr>
+  </table>
+  <p style="color: #999; font-size: 12px;">Thank you for using BIDYUT.</p>
+</div>
