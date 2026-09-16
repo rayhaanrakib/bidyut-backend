@@ -29,3 +29,8 @@ export const assign = tryCatchAsync(async (req: Request, res: Response) => {
   const report = await outageService.assignTechnician(req.user!, req.params.id as string, req.body.technicianId);
   sendResponse(res, 200, 'Technician assigned', report);
 });
+
+export const cancel = tryCatchAsync(async (req: Request, res: Response) => {
+  const report = await outageService.cancelOwnReport(req.user!.id, req.params.id as string);
+  sendResponse(res, 200, 'Report cancelled', report);
+});
