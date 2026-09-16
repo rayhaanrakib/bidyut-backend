@@ -1,0 +1,19 @@
+import { Request, Response } from 'express';
+import * as outageService from '@modules/outage/outage.service';
+
+import { tryCatchAsync } from '@utils/tryCatchAsync';
+import { sendResponse } from '@utils/sendResponse';
+export const report = tryCatchAsync(async (req: Request, res: Response) => {
+  const report = await outageService.reportOutage(req.user!, req.body);
+  sendResponse(res, 201, 'Outage reported', report);
+});
+
+export const list = tryCatchAsync(async (req: Request, res: Response) => {
+  const { items, meta } = await outageService.listForRole(req.user!, req.query);
+  sendResponse(res, 200, 'Outage reports retrieved', items, meta);
+});
+
+export const getById = tryCatchAsync(async (req: Request, res: Response) => {
+  const report = await outageService.getByIdScoped(req.user!, req.params.id as string);
+  sendResponse(res, 200, 'Outage report retrieved', report);
+});
