@@ -4,8 +4,12 @@ import { AppError } from '@utils/AppError';
 import { getPagination } from '@utils/pagination';
 import { CreateScheduleInput, UpdateScheduleInput } from '@modules/schedule/schedule.interface';
 import { logActivity } from '@utils/activity';
+import config from '@app/config';
 
-const ACTIVE = ['SCHEDULED', 'ONGOING'];
+// const ACTIVE = ['SCHEDULED', 'ONGOING'];
+const MINUTE = 60_000;
+const DAY = 86_400_000;
+
 
 export const createSchedule = async (actor: User, input: CreateScheduleInput) => {
   let feederId = input.feederId ?? null;
@@ -18,6 +22,7 @@ export const createSchedule = async (actor: User, input: CreateScheduleInput) =>
     if (!feeder) throw new AppError(404, 'Feeder not found');
   }
 
+
   const overlap = await prisma.schedule.findFirst({
     where: {
       feederId,
@@ -27,7 +32,24 @@ export const createSchedule = async (actor: User, input: CreateScheduleInput) =>
     },
   });
   if (overlap) throw new AppError(409, `Time overlaps with existing schedule "${overlap.title}"`);
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7)); // back to Monday
+  const weekEnd = new Date(weekStart.getTime() + 7 * DAY);
 
+  const weekSchedules = await prisma.schedule.findMany({
+    where: { feederId, status: { notIn: ['CANCELLED'] }, startTime: { gte: weekStart, lt: weekEnd } },
+  });
+  const usedMinutes = weekSchedules.reduce((sum, s) => sum + (s.endTime.getTime() - s.startTime.getTime()) / MINUTE, 0);
+  const newMinutes = (input.endTime.getTime() - input.startTime.getTime()) / MINUTE;
+
+  if (usedMinutes + newMinutes > config.weeklyCapMinutes) {
+    throw new AppError(
+      409,
+      `Weekly cap exceeded: feeder already has ${Math.round(usedMinutes)} of ${config.weeklyCapMinutes} shed minutes this week`,
+    );
+  }
   const schedule = await prisma.schedule.create({
     data: { ...input, feederId, createdById: actor.id },
   });
@@ -88,4 +110,25 @@ export const deleteSchedule = async (id: string) => {
   if (!schedule) throw new AppError(404, 'Schedule not found');
   if (schedule.status === 'ONGOING') throw new AppError(409, 'Cannot delete an ONGOING schedule — cancel it instead');
   await prisma.schedule.delete({ where: { id } });
+};
+
+const NEXT_SCHEDULE_STATUS: Record<string, string[]> = {
+  SCHEDULED: ['ONGOING', 'CANCELLED'],
+  ONGOING: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
+export const updateScheduleStatus = async (actor: User, id: string, newStatus: string) => {
+  const schedule = await prisma.schedule.findUnique({ where: { id } });
+  if (!schedule) throw new AppError(404, 'Schedule not found');
+
+  const allowed = NEXT_SCHEDULE_STATUS[schedule.status] ?? [];
+  if (!allowed.includes(newStatus)) {
+    throw new AppError(409, `Invalid transition: ${schedule.status} → ${newStatus}. Allowed: ${allowed.join(', ') || 'none'}`);
+  }
+
+  const updated = await prisma.schedule.update({ where: { id }, data: { status: newStatus as any } });
+  await logActivity('SCHEDULE_STATUS_CHANGED', 'Schedule', id, actor.id, { newStatus });
+  return updated;
 };

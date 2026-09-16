@@ -27,3 +27,8 @@ export const remove = tryCatchAsync(async (req: Request, res: Response) => {
   await scheduleService.deleteSchedule(req.params.id as string);
   sendResponse(res, 200, 'Schedule deleted');
 });
+
+export const updateStatus = tryCatchAsync(async (req: Request, res: Response) => {
+  const schedule = await scheduleService.updateScheduleStatus(req.user!, req.params.id as string, req.body.status);
+  sendResponse(res, 200, `Schedule status updated to ${schedule.status}`, schedule);
+});

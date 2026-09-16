@@ -1,5 +1,5 @@
 import { z } from 'zod';
- 
+
 const scheduleBase = z.object({
   title: z.string().min(3, 'Title is too short'),
   reason: z.string().optional(),
@@ -18,3 +18,6 @@ export const updateScheduleSchema = scheduleBase.partial().refine(
   (d) => (d.startTime && d.endTime ? d.endTime > d.startTime : true),
   { message: 'endTime must be after startTime' },
 );
+export const updateScheduleStatusSchema = z.object({
+  status: z.enum(['ONGOING', 'COMPLETED', 'CANCELLED']),
+});
