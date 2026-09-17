@@ -5,9 +5,11 @@
   "developer": "rayhaanrakib.vercel.app",
   "main": "index.js",
   "scripts": {
-    "dev": "bun --watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "bunx prisma generate && bunx prisma migrate deploy && tsc --noEmit",
     "start": "bun src/server.ts",
+    "build:bundle": "tsup",
+    "start:node": "node dist/server.js",
     "format:check": "biome format ./src",
     "format:fix": "biome format --write ./src",
     "lint:check": "biome lint ./src",
@@ -15,11 +17,13 @@
     "check": "biome check ./src",
     "check:fix": "biome check --write ./src",
     "typecheck": "tsc --noEmit",
+    "generate": "prisma generate",
     "db:generate": "bunx prisma generate",
     "db:migrate": "bunx prisma migrate dev",
     "db:deploy": "bunx prisma migrate deploy",
     "db:seed": "bun prisma/seed.ts",
-    "db:studio": "bunx prisma studio"
+    "db:studio": "bunx prisma studio",
+    "stripe:webhook": "stripe listen --forward-to https://rayhaanrakib-bidyut-backend.vercel.app/api/v1/payments/webhook"
   },
   "keywords": [
     "Power Outage Management System",
@@ -44,6 +48,7 @@
     "@types/bun": "latest",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
+    "@types/ejs": "^3.1.5",
     "@types/express": "^5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
@@ -53,7 +58,9 @@
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.23.1",
-    "prisma": "7.8.0"
+    "prisma": "7.8.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.13"
   },
   "peerDependencies": {
     "typescript": "^7.0.2"
@@ -69,6 +76,7 @@
     "ejs": "^6.0.1",
     "express": "^5",
     "express-rate-limit": "^8.7.0",
+    "google-auth-library": "^11.0.2",
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
