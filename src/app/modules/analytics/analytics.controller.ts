@@ -15,3 +15,13 @@ export const heatmap = tryCatchAsync(async (req: Request, res: Response) => {
   const data = await analyticsService.heatmap(days);
   sendResponse(res, 200, 'Outage heatmap', data);
 });
+
+export const mySummary = tryCatchAsync(async (req: Request, res: Response) => {
+  const data = await analyticsService.customerSummary(req.user!.id);
+  sendResponse(res, 200, 'Your summary', data);
+});
+
+export const technicianSummary = tryCatchAsync(async (req: Request, res: Response) => {
+  const data = await analyticsService.technicianSummary(req.user!.id);
+  sendResponse(res, 200, 'Performance summary', data);
+});
