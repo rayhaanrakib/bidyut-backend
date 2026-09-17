@@ -63,7 +63,7 @@ export const completePayment = async (paymentId: string, stripePaymentIntentId: 
   await prisma.$transaction(async (tx) => {
     const payment = await tx.payment.findUnique({ where: { id: paymentId } });
     if (!payment) throw new AppError(404, 'Payment not found');
- 
+
     if (payment.status !== 'PENDING') return;
 
     await tx.payment.update({
@@ -102,4 +102,26 @@ export const completePayment = async (paymentId: string, stripePaymentIntentId: 
       date: payment.updatedAt.toISOString().slice(0, 10),
     }).catch(() => null);
   }
+};
+
+
+export const listMyPayments = async (userId: string, query: Record<string, unknown>) => {
+  const { page, limit, skip, sortBy, sortOrder, meta } = getPagination(query);
+  const where: any = { userId };
+  if (query.status) where.status = query.status;
+  if (query.type) where.type = query.type;
+
+  const [total, items] = await Promise.all([
+    prisma.payment.count({ where }),
+    prisma.payment.findMany({ where, skip, take: limit, orderBy: { [sortBy]: sortOrder } }),
+  ]);
+  return { items, meta: meta(total) };
+};
+
+export const getByTransactionId = async (user: User, transactionId: string) => {
+  const payment = await prisma.payment.findUnique({ where: { transactionId } });
+  if (!payment) throw new AppError(404, 'Payment not found');
+  const isStaff = user.role === 'ADMIN' || user.role === 'POWER_OPERATOR';
+  if (!isStaff && payment.userId !== user.id) throw new AppError(403, 'You cannot view this payment');
+  return payment;
 };

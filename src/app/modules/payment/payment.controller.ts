@@ -30,3 +30,15 @@ export const stripeWebhook = tryCatchAsync(async (req: Request, res: Response) =
 
   res.json({ received: true });
 });
+
+
+export const myPayments = tryCatchAsync(async (req: Request, res: Response) => {
+  const { items, meta } = await paymentService.listMyPayments(req.user!.id, req.query);
+  sendResponse(res, 200, 'Payments retrieved', items, meta);
+});
+
+export const getByTransaction = tryCatchAsync(async (req: Request, res: Response) => {
+  const payment = await paymentService.getByTransactionId(req.user!, req.params.transactionId as string);
+  sendResponse(res, 200, 'Payment retrieved', payment);
+});
+

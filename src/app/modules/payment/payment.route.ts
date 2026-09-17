@@ -28,5 +28,8 @@ router.post("/cancel", (req: Request, res: Response) => {
   );
 });
 
+router.get('/my-payments', checkAuth('CUSTOMER'), paymentController.myPayments);
+router.get('/:transactionId', checkAuth(), paymentController.getByTransaction);
+
 
 export default router;
