@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import checkAuth from '@middleware/checkAuth';
 import validateRequest from '@middleware/validateRequest';
 import * as paymentController from '@modules/payment/payment.controller';
-import { checkoutSchema } from '@modules/payment/payment.validation';
+import { checkoutSchema, refundSchema } from '@modules/payment/payment.validation';
 import { sendResponse } from '@utils/sendResponse';
 
 const router = Router();
@@ -30,6 +30,7 @@ router.post("/cancel", (req: Request, res: Response) => {
 
 router.get('/my-payments', checkAuth('CUSTOMER'), paymentController.myPayments);
 router.get('/:transactionId', checkAuth(), paymentController.getByTransaction);
+router.post('/refund', checkAuth('ADMIN'), validateRequest(refundSchema), paymentController.refund);
 
 
 export default router;

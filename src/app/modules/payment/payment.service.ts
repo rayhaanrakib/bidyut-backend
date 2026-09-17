@@ -125,3 +125,32 @@ export const getByTransactionId = async (user: User, transactionId: string) => {
   if (!isStaff && payment.userId !== user.id) throw new AppError(403, 'You cannot view this payment');
   return payment;
 };
+
+
+export const refundPayment = async (actorId: string, transactionId: string) => {
+  const payment = await prisma.payment.findUnique({ where: { transactionId } });
+  if (!payment) throw new AppError(404, 'Payment not found');
+  if (payment.status !== 'COMPLETED') throw new AppError(409, 'Only COMPLETED payments can be refunded');
+  if (!payment.stripePaymentIntentId) throw new AppError(409, 'No Stripe payment intent recorded for this payment');
+
+  await stripe.refunds.create({ payment_intent: payment.stripePaymentIntentId });
+
+  return prisma.$transaction(async (tx) => {
+    const refunded = await tx.payment.update({ where: { id: payment.id }, data: { status: 'REFUNDED' } });
+
+    if (payment.type === 'PRIORITY_RESTORATION' && payment.outageReportId) {
+      await tx.outageReport.update({ where: { id: payment.outageReportId }, data: { isPriority: false } });
+    }
+    if (payment.type === 'SLA_SUBSCRIPTION') {
+      await tx.user.update({
+        where: { id: payment.userId },
+        data: { slaActive: false, slaExpiryDate: null },
+      });
+    }
+
+    await tx.activityLog.create({
+      data: { action: 'PAYMENT_REFUNDED', entity: 'Payment', entityId: payment.id, actorId, metadata: "" },
+    });
+    return refunded;
+  });
+};

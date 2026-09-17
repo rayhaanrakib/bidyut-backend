@@ -8,3 +8,8 @@ export const checkoutSchema = z
   .refine((d) => d.type !== 'PRIORITY_RESTORATION' || Boolean(d.outageReportId), {
     message: 'outageReportId is required for a priority restoration pass',
   });
+
+
+export const refundSchema = z.object({
+  transactionId: z.string().min(3, 'transactionId is required'),
+});

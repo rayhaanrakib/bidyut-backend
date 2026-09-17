@@ -42,3 +42,8 @@ export const getByTransaction = tryCatchAsync(async (req: Request, res: Response
   sendResponse(res, 200, 'Payment retrieved', payment);
 });
 
+
+export const refund = tryCatchAsync(async (req: Request, res: Response) => {
+  const payment = await paymentService.refundPayment(req.user!.id, req.body.transactionId);
+  sendResponse(res, 200, 'Payment refunded and status updated', payment);
+});
