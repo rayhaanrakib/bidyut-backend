@@ -4,10 +4,11 @@ import validateRequest from '@middleware/validateRequest';
 import * as paymentController from '@modules/payment/payment.controller';
 import { checkoutSchema, refundSchema } from '@modules/payment/payment.validation';
 import { sendResponse } from '@utils/sendResponse';
+import { paymentLimiter } from '@middleware/rateLimiter';
 
 const router = Router();
 
-router.post('/checkout-session', checkAuth('CUSTOMER'), validateRequest(checkoutSchema), paymentController.createCheckout);
+router.post('/checkout-session', paymentLimiter, checkAuth('CUSTOMER'), validateRequest(checkoutSchema), paymentController.createCheckout);
 router.post('/webhook', paymentController.stripeWebhook);
 
 // payment status backend test redirect

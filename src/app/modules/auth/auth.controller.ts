@@ -57,7 +57,6 @@ export const googleLogin = (req: Request, res: Response) => {
   return res.redirect(googleAuthUrl);
 };
 
-// Google redirects the real browser here — so WE redirect the browser on.
 export const googleCallback = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('google', { session: false }, (err, user, info) => {
     if (err || !user) {
