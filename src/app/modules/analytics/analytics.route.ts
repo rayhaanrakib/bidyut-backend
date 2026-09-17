@@ -9,5 +9,6 @@ router.get('/operational', checkAuth('POWER_OPERATOR', 'ADMIN'), analyticsContro
 router.get('/heatmap', checkAuth('POWER_OPERATOR', 'ADMIN'), analyticsController.heatmap); // ?days=30
 router.get('/my-summary', checkAuth('CUSTOMER'), analyticsController.mySummary);
 router.get('/technician-summary', checkAuth('FIELD_TECHNICIAN'), analyticsController.technicianSummary);
+router.get('/activity-logs', checkAuth('ADMIN'), analyticsController.activityLogs); // ?action=&entity=
 
 export default router;
