@@ -6,10 +6,10 @@ import * as userController from "./user.controller";
 import {
   adminUpdateRoleSchema,
   adminUpdateStatusSchema,
-  staffCreateSchema,
-  updateProfileSchema,
   applyTechnicianSchema,
   decideApplicationSchema,
+  staffCreateSchema,
+  updateProfileSchema,
 } from "./user.validation";
 
 const router = Router();
@@ -46,10 +46,24 @@ router.post(
   userController.createStaff,
 );
 
-
 // apply as technician
-router.post('/apply-as-technician', checkAuth('CUSTOMER'), upload.single('resume'), validateRequest(applyTechnicianSchema), userController.applyAsTechnician);
-router.get('/technician-applications', checkAuth('ADMIN'), userController.listTechnicianApplications);
-router.patch('/technician-applications/:userId', checkAuth('ADMIN'), validateRequest(decideApplicationSchema), userController.decideTechnicianApplication);
+router.post(
+  "/apply-as-technician",
+  checkAuth("CUSTOMER"),
+  upload.single("resume"),
+  validateRequest(applyTechnicianSchema),
+  userController.applyAsTechnician,
+);
+router.get(
+  "/technician-applications",
+  checkAuth("ADMIN"),
+  userController.listTechnicianApplications,
+);
+router.patch(
+  "/technician-applications/:userId",
+  checkAuth("ADMIN"),
+  validateRequest(decideApplicationSchema),
+  userController.decideTechnicianApplication,
+);
 
 export default router;

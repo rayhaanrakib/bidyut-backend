@@ -4,6 +4,7 @@ import type { User } from "../../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { getPagination } from "../../utils/pagination";
+import { sendResponse } from "../../utils/sendResponse";
 import { tryCatchAsync } from "../../utils/tryCatchAsync";
 import * as userService from "./user.service";
 import {
@@ -12,7 +13,6 @@ import {
   operatorProfileSchema,
   technicianProfileSchema,
 } from "./user.validation";
-import { sendResponse } from "../../utils/sendResponse";
 
 export const updateProfile = tryCatchAsync(async (req: Request, res: Response) => {
   const user = await userService.updateProfile((req.user as User).id, req.body);
@@ -111,21 +111,21 @@ export const createStaff = tryCatchAsync(async (req: Request, res: Response) => 
   sendResponse(res, 200, `${user.role} account created`, { user });
 });
 
-
-
-
-
 export const applyAsTechnician = tryCatchAsync(async (req: Request, res: Response) => {
   const profile = await userService.applyAsTechnician(req.user as User, req.file, req.body);
-  sendResponse(res, 200, 'Application submitted — an admin will review it', profile);
+  sendResponse(res, 200, "Application submitted — an admin will review it", profile);
 });
 
 export const listTechnicianApplications = tryCatchAsync(async (req: Request, res: Response) => {
   const { items, meta } = await userService.listTechnicianApplications(req.query);
-  sendResponse(res, 200, 'Technician applications', items, meta);
+  sendResponse(res, 200, "Technician applications", items, meta);
 });
 
 export const decideTechnicianApplication = tryCatchAsync(async (req: Request, res: Response) => {
-  const profile = await userService.decideTechnicianApplication(req.user as User, String(req.params.userId), req.body);
+  const profile = await userService.decideTechnicianApplication(
+    req.user as User,
+    String(req.params.userId),
+    req.body,
+  );
   sendResponse(res, 200, `Application ${profile.applicationStatus.toLowerCase()}`, profile);
 });

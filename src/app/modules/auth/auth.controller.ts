@@ -3,9 +3,9 @@ import type { User } from "../../../../generated/prisma/client";
 import config from "../../config";
 import passport from "../../lib/passport";
 import { clearAuthCookies, setAuthCookies } from "../../utils/authCookie";
+import { sendResponse } from "../../utils/sendResponse";
 import { tryCatchAsync } from "../../utils/tryCatchAsync";
 import * as authService from "./auth.service";
-import { sendResponse } from "../../utils/sendResponse";
 
 export const register = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.register(req.body);
@@ -93,9 +93,12 @@ export const resetPassword = tryCatchAsync(async (req: Request, res: Response) =
 export const googleIdTokenLogin = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.googleIdTokenLogin(req.body);
   setAuthCookies(res, result.accessToken, result.refreshToken);
-  sendResponse(res, 200, result.isNewUser
-      ? "Account created and logged in with Google"
-      : "Google login successful", result);
+  sendResponse(
+    res,
+    200,
+    result.isNewUser ? "Account created and logged in with Google" : "Google login successful",
+    result,
+  );
 });
 
 export const oauthSuccess = (_req: Request, res: Response) => {

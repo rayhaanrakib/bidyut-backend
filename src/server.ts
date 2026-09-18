@@ -10,10 +10,6 @@ const PORT = config.server.port;
 
 let initializationPromise: Promise<void> | null = null;
 
-/**
- * Initializes infrastructure connections (PostgreSQL, Redis, SMTP) and seeds base data.
- * Memoized so it runs only once per instance lifecycle (crucial for serverless environments like Vercel).
- */
 const initializeServices = async (): Promise<void> => {
   if (initializationPromise) return initializationPromise;
 

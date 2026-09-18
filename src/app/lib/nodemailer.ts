@@ -1,6 +1,6 @@
 import path from "node:path";
 import ejs from "ejs";
-import nodemailer, { Attachment } from "nodemailer";
+import nodemailer, { type Attachment } from "nodemailer";
 import config from "../config";
 
 export const transporter = nodemailer.createTransport({
@@ -21,5 +21,11 @@ export async function sendEmail(
   }
   const file = path.join(process.cwd(), "src", "app", "templates", `${template}.ejs`);
   const html = await ejs.renderFile(file, data);
-  await transporter.sendMail({ from: `"BIDYUT" <${config.smtp.sender}>`, to, subject, html, attachments });
+  await transporter.sendMail({
+    from: `"BIDYUT" <${config.smtp.sender}>`,
+    to,
+    subject,
+    html,
+    attachments,
+  });
 }

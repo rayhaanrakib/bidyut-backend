@@ -5,6 +5,7 @@ import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import { AppError } from "../../utils/AppError";
 import { getPagination } from "../../utils/pagination";
+import { buildReceiptPdf } from "../../utils/receiptPdf";
 import type { CheckoutInput } from "./payment.interface";
 
 const DAY = 86_400_000;
@@ -14,7 +15,9 @@ export const createCheckoutSession = async (customer: User, input: CheckoutInput
 
   let outageReportId: string | null = null;
   if (isPriority) {
-    const report = await prisma.outageReport.findUnique({ where: { id: input.outageReportId } });
+    const report = await prisma.outageReport.findUnique({
+      where: { id: input.outageReportId },
+    });
     if (!report || report.customerId !== customer.id)
       throw new AppError(404, "Outage report not found (must be your own)");
     if (report.isPriority) throw new AppError(409, "This report already has priority restoration");
@@ -55,7 +58,10 @@ export const createCheckoutSession = async (customer: User, input: CheckoutInput
     cancel_url: `${config.server.backendUrl}/payment/cancel`,
   });
 
-  await prisma.payment.update({ where: { id: payment.id }, data: { stripeSessionId: session.id } });
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { stripeSessionId: session.id },
+  });
   return { url: session.url, transactionId };
 };
 
@@ -80,7 +86,10 @@ export const completePayment = async (paymentId: string, stripePaymentIntentId: 
     if (payment.type === "SLA_SUBSCRIPTION") {
       await tx.user.update({
         where: { id: payment.userId },
-        data: { slaActive: true, slaExpiryDate: new Date(Date.now() + config.slaDays * DAY) },
+        data: {
+          slaActive: true,
+          slaExpiryDate: new Date(Date.now() + config.slaDays * DAY),
+        },
       });
     }
 
@@ -90,7 +99,10 @@ export const completePayment = async (paymentId: string, stripePaymentIntentId: 
         entity: "Payment",
         entityId: payment.id,
         actorId: payment.userId,
-        metadata: { type: payment.type, amountPaisa: payment.amountPaisa } as any,
+        metadata: {
+          type: payment.type,
+          amountPaisa: payment.amountPaisa,
+        } as any,
       },
     });
   });
@@ -100,13 +112,26 @@ export const completePayment = async (paymentId: string, stripePaymentIntentId: 
     include: { user: true },
   });
   if (payment) {
-    await sendEmail(payment.user.email, "🧾 Your BIDYUT payment receipt", "receipt", {
-      name: payment.user.name,
-      transactionId: payment.transactionId,
-      type: payment.type,
-      amountBDT: payment.amountPaisa / 100,
-      date: payment.updatedAt.toISOString().slice(0, 10),
-    }).catch(() => null);
+    const pdf = await buildReceiptPdf(payment);
+    await sendEmail(
+      payment.user.email,
+      "🧾 Your BIDYUT payment receipt",
+      "receipt",
+      {
+        name: payment.user.name,
+        transactionId: payment.transactionId,
+        type: payment.type,
+        amountBDT: payment.amountPaisa / 100,
+        date: payment.updatedAt.toISOString().slice(0, 10),
+      },
+      [
+        {
+          filename: `receipt-${payment.transactionId}.pdf`,
+          content: pdf,
+          contentType: "application/pdf",
+        },
+      ],
+    ).catch(() => null);
   }
 };
 
@@ -118,7 +143,12 @@ export const listMyPayments = async (userId: string, query: Record<string, unkno
 
   const [total, items] = await Promise.all([
     prisma.payment.count({ where }),
-    prisma.payment.findMany({ where, skip, take: limit, orderBy: { [sortBy]: sortOrder } }),
+    prisma.payment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+    }),
   ]);
   return { items, meta: meta(total) };
 };
@@ -140,7 +170,9 @@ export const refundPayment = async (actorId: string, transactionId: string) => {
   if (!payment.stripePaymentIntentId)
     throw new AppError(409, "No Stripe payment intent recorded for this payment");
 
-  await stripe.refunds.create({ payment_intent: payment.stripePaymentIntentId });
+  await stripe.refunds.create({
+    payment_intent: payment.stripePaymentIntentId,
+  });
 
   return prisma.$transaction(async (tx) => {
     const refunded = await tx.payment.update({

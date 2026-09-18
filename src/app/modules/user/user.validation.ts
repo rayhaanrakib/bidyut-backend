@@ -75,9 +75,8 @@ export const staffCreateSchema = z.object({
   experienceYears: z.coerce.number().int().min(0).max(45).optional(),
 });
 
-
 export const applyTechnicianSchema = z.object({
-  specialization: z.enum(['LINE', 'TRANSFORMER', 'METERING', 'GENERATION']).optional(),
+  specialization: z.enum(["LINE", "TRANSFORMER", "METERING", "GENERATION"]).optional(),
   experienceYears: z.coerce.number().int().min(0).max(50).optional(),
   certification: z.string().max(120).optional(),
   phone: z.string().max(20).optional(),
@@ -85,9 +84,9 @@ export const applyTechnicianSchema = z.object({
 
 export const decideApplicationSchema = z
   .object({
-    applicationStatus: z.enum(['APPROVED', 'REJECTED']),
-    rejectionReason: z.string().min(4, 'Give the applicant a real reason').optional(),
+    applicationStatus: z.enum(["APPROVED", "REJECTED"]),
+    rejectionReason: z.string().min(4, "Give the applicant a real reason").optional(),
   })
-  .refine((d) => d.applicationStatus !== 'REJECTED' || Boolean(d.rejectionReason), {
-    message: 'A rejection reason is required when rejecting an application',
+  .refine((d) => d.applicationStatus !== "REJECTED" || Boolean(d.rejectionReason), {
+    message: "A rejection reason is required when rejecting an application",
   });

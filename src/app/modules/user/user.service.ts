@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
-import type {  Prisma, TechnicianSpecialization, User  } from "../../../../generated/prisma/client";
+import type { Prisma, TechnicianSpecialization, User } from "../../../../generated/prisma/client";
 import config from "../../config";
 import { cloudinary } from "../../lib/cloudinary";
 import { sendEmail } from "../../lib/nodemailer";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { logActivity } from "../../utils/activity";
-import type { StaffCreateInput } from "./user.interface";
 import { getPagination } from "../../utils/pagination";
+import type { StaffCreateInput } from "./user.interface";
 
 export async function updateProfile(userId: string, input: Record<string, unknown>) {
   return prisma.user.update({ where: { id: userId }, data: input });
@@ -202,41 +202,44 @@ export async function createStaff(actor: User, input: StaffCreateInput) {
   return user;
 }
 
-
-
-
-
-
 export const applyAsTechnician = async (
   customer: User,
   file: Express.Multer.File | undefined,
-  input: { specialization?: string; experienceYears?: number; certification?: string; phone?: string },
+  input: {
+    specialization?: string;
+    experienceYears?: number;
+    certification?: string;
+    phone?: string;
+  },
 ) => {
-  if (customer.role !== 'CUSTOMER') throw new AppError(409, 'Only customer accounts can apply as technicians');
+  if (customer.role !== "CUSTOMER")
+    throw new AppError(409, "Only customer accounts can apply as technicians");
 
   const existing = await prisma.technicianProfile.findUnique({ where: { userId: customer.id } });
   if (existing) {
-    if (existing.applicationStatus === 'PENDING') throw new AppError(409, 'Your application is already under review');
-    if (existing.applicationStatus === 'APPROVED') throw new AppError(409, 'You are already an approved technician');
+    if (existing.applicationStatus === "PENDING")
+      throw new AppError(409, "Your application is already under review");
+    if (existing.applicationStatus === "APPROVED")
+      throw new AppError(409, "You are already an approved technician");
   }
 
   if (!file) throw new AppError(400, 'No resume file provided. Send form-data with key "resume".');
 
   const upload = await new Promise<any>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ folder: 'bidyut/resumes' }, (error, res) =>
+    const stream = cloudinary.uploader.upload_stream({ folder: "bidyut/resumes" }, (error, res) =>
       error ? reject(error) : resolve(res),
     );
     stream.end(file.buffer);
   });
 
   const fields = {
-    specialization: (input.specialization ?? 'LINE') as TechnicianSpecialization,
+    specialization: (input.specialization ?? "LINE") as TechnicianSpecialization,
     experienceYears: input.experienceYears,
     certification: input.certification,
     phone: input.phone,
     resumeUrl: upload.secure_url,
     resumePublicId: upload.public_id,
-    applicationStatus: 'PENDING' as const,
+    applicationStatus: "PENDING" as const,
     rejectionReason: null,
     reviewedById: null,
     reviewedAt: null,
@@ -248,20 +251,23 @@ export const applyAsTechnician = async (
         data: fields satisfies Prisma.TechnicianProfileUncheckedUpdateInput,
       })
     : await prisma.technicianProfile.create({
-        data: { userId: customer.id, ...fields } satisfies Prisma.TechnicianProfileUncheckedCreateInput,
+        data: {
+          userId: customer.id,
+          ...fields,
+        } satisfies Prisma.TechnicianProfileUncheckedCreateInput,
       });
 
-  await logActivity('TECHNICIAN_APPLICATION_SUBMITTED', 'User', customer.id, customer.id);
+  await logActivity("TECHNICIAN_APPLICATION_SUBMITTED", "User", customer.id, customer.id);
   return profile;
 };
 
 export const listTechnicianApplications = async (query: Record<string, unknown>) => {
   const { limit, skip, sortBy, sortOrder, meta } = getPagination(query);
-  const where: any = { applicationStatus: query.status ?? 'PENDING' }; // ?status=PENDING|APPROVED|REJECTED
+  const where: any = { applicationStatus: query.status ?? "PENDING" }; // ?status=PENDING|APPROVED|REJECTED
   const [items, total] = await Promise.all([
     prisma.technicianProfile.findMany({
       where,
-      include: { user: { select: safeSelect } }, 
+      include: { user: { select: safeSelect } },
       skip,
       take: limit,
       orderBy: { [sortBy]: sortOrder },
@@ -271,18 +277,23 @@ export const listTechnicianApplications = async (query: Record<string, unknown>)
   return { items, meta: meta(total) };
 };
 
-
-
 export const decideTechnicianApplication = async (
   admin: User,
   userId: string,
-  input: { applicationStatus: 'APPROVED' | 'REJECTED'; rejectionReason?: string },
+  input: { applicationStatus: "APPROVED" | "REJECTED"; rejectionReason?: string },
 ) => {
-  const profile = await prisma.technicianProfile.findUnique({ where: { userId }, include: { user: true } });
-  if (!profile) throw new AppError(404, 'No technician application found for this user');
-  if (profile.applicationStatus !== 'PENDING') throw new AppError(409, `This application was already ${profile.applicationStatus.toLowerCase()}`);
-  if (input.applicationStatus === 'REJECTED' && !input.rejectionReason) {
-    throw new AppError(400, 'A rejection reason is required when rejecting an application');
+  const profile = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    include: { user: true },
+  });
+  if (!profile) throw new AppError(404, "No technician application found for this user");
+  if (profile.applicationStatus !== "PENDING")
+    throw new AppError(
+      409,
+      `This application was already ${profile.applicationStatus.toLowerCase()}`,
+    );
+  if (input.applicationStatus === "REJECTED" && !input.rejectionReason) {
+    throw new AppError(400, "A rejection reason is required when rejecting an application");
   }
 
   const decided = await prisma.$transaction(async (tx) => {
@@ -290,21 +301,21 @@ export const decideTechnicianApplication = async (
       where: { userId },
       data: {
         applicationStatus: input.applicationStatus,
-        rejectionReason: input.applicationStatus === 'REJECTED' ? input.rejectionReason : null,
+        rejectionReason: input.applicationStatus === "REJECTED" ? input.rejectionReason : null,
         reviewedById: admin.id,
         reviewedAt: new Date(),
-        ...(input.applicationStatus === 'APPROVED'
+        ...(input.applicationStatus === "APPROVED"
           ? { employeeId: profile.employeeId ?? `DES-${Date.now().toString().slice(-6)}` }
           : {}),
       },
     });
-    if (input.applicationStatus === 'APPROVED') {
-      await tx.user.update({ where: { id: userId }, data: { role: 'FIELD_TECHNICIAN' } });
+    if (input.applicationStatus === "APPROVED") {
+      await tx.user.update({ where: { id: userId }, data: { role: "FIELD_TECHNICIAN" } });
     }
     await tx.activityLog.create({
       data: {
-        action: 'TECHNICIAN_APPLICATION_DECIDED',
-        entity: 'User',
+        action: "TECHNICIAN_APPLICATION_DECIDED",
+        entity: "User",
         entityId: userId,
         actorId: admin.id,
         metadata: { applicationStatus: input.applicationStatus } as any,
@@ -315,9 +326,15 @@ export const decideTechnicianApplication = async (
 
   await sendEmail(
     profile.user.email,
-    input.applicationStatus === 'APPROVED' ? '⚡ Your BIDYUT technician application was approved' : 'Your BIDYUT technician application — update',
-    'technician-application',
-    { name: profile.user.name, approved: input.applicationStatus === 'APPROVED', reason: input.rejectionReason },
+    input.applicationStatus === "APPROVED"
+      ? "⚡ Your BIDYUT technician application was approved"
+      : "Your BIDYUT technician application — update",
+    "technician-application",
+    {
+      name: profile.user.name,
+      approved: input.applicationStatus === "APPROVED",
+      reason: input.rejectionReason,
+    },
   ).catch(() => null);
 
   return decided;
