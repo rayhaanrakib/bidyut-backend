@@ -62,8 +62,6 @@ export default {
   slaBreachHours: Number(process.env.SLA_BREACH_HOURS)!,
   cronSecret: process.env.CRON_SECRET!,
 
-
-
   seed: {
     admin: {
       name: process.env.SEED_ADMIN_NAME!,

@@ -1,4 +1,4 @@
-import { prisma } from '@lib/prisma';
+import { prisma } from "../lib/prisma";
 
 export async function logActivity(
   action: string,
@@ -12,6 +12,6 @@ export async function logActivity(
       data: { action, entity, entityId, actorId, metadata: (metadata ?? undefined) as any },
     });
   } catch (err) {
-    console.error('Activity log failed:', err);
+    console.error("Activity log failed:", err);
   }
 }

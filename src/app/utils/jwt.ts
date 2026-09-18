@@ -1,14 +1,17 @@
-import jwt from 'jsonwebtoken';
-import config from '@app/config';
+import jwt from "jsonwebtoken";
+import config from "../config";
 
 export type JwtPayload = { id: string; role: string };
 
 export const createAccessToken = (payload: JwtPayload) =>
-  jwt.sign(payload, config.jwt.accessSecret, { expiresIn: config.jwt.accessExpiresIn } as jwt.SignOptions);
+  jwt.sign(payload, config.jwt.accessSecret, {
+    expiresIn: config.jwt.accessExpiresIn,
+  } as jwt.SignOptions);
 
 export const createRefreshToken = (payload: JwtPayload) =>
-  jwt.sign(payload, config.jwt.refreshSecret, { expiresIn: config.jwt.refreshExpiresIn } as jwt.SignOptions);
-
+  jwt.sign(payload, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshExpiresIn,
+  } as jwt.SignOptions);
 
 export function verifyToken(
   token: string,
@@ -16,7 +19,7 @@ export function verifyToken(
   try {
     return { success: true, data: jwt.verify(token, config.jwt.accessSecret) as JwtPayload };
   } catch (error: any) {
-    return { success: false, error: error?.message ?? 'Invalid token' };
+    return { success: false, error: error?.message ?? "Invalid token" };
   }
 }
 

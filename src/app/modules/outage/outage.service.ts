@@ -1,11 +1,11 @@
-import { User } from "@/generated/prisma/client";
-import { prisma } from "@lib/prisma";
-import { AppError } from "@utils/AppError";
-import { getPagination } from "@utils/pagination";
-import { ReportOutageInput } from "@modules/outage/outage.interface";
-import { logActivity } from "@utils/activity";
-import { sendEmail } from "@lib/nodemailer";
-import config from "@app/config";
+import type { User } from "../../../../generated/prisma/client";
+import config from "../../config";
+import { sendEmail } from "../../lib/nodemailer";
+import { prisma } from "../../lib/prisma";
+import { AppError } from "../../utils/AppError";
+import { logActivity } from "../../utils/activity";
+import { getPagination } from "../../utils/pagination";
+import type { ReportOutageInput } from "./outage.interface";
 
 const NEXT_STATUSES: Record<string, string[]> = {
   PENDING: ["ASSIGNED", "CANCELLED"],
@@ -28,10 +28,7 @@ const reportInclude = {
 };
 
 // report outage post request
-export const reportOutage = async (
-  customer: User,
-  input: ReportOutageInput,
-) => {
+export const reportOutage = async (customer: User, input: ReportOutageInput) => {
   const area = await prisma.area.findFirst({
     where: { id: input.areaId, isDeleted: false },
   });
@@ -39,14 +36,10 @@ export const reportOutage = async (
 
   // ---- priority flag ----
   const slaValid =
-    customer.slaActive &&
-    customer.slaExpiryDate &&
-    customer.slaExpiryDate > new Date();
+    customer.slaActive && customer.slaExpiryDate && customer.slaExpiryDate > new Date();
 
   const isPriority =
-    Boolean(slaValid) ||
-    customer.category === "HEALTHCARE" ||
-    customer.category === "EDUCATION";
+    Boolean(slaValid) || customer.category === "HEALTHCARE" || customer.category === "EDUCATION";
 
   const report = await prisma.outageReport.create({
     data: {
@@ -60,15 +53,9 @@ export const reportOutage = async (
 
   // log priority flag activity
   if (isPriority) {
-    await logActivity(
-      "PRIORITY_FLAGGED",
-      "OutageReport",
-      report.id,
-      customer.id,
-      {
-        reason: slaValid ? "SLA" : customer.category,
-      },
-    );
+    await logActivity("PRIORITY_FLAGGED", "OutageReport", report.id, customer.id, {
+      reason: slaValid ? "SLA" : customer.category,
+    });
   }
   // ---- bulk incident detection ----
 
@@ -99,16 +86,10 @@ export const reportOutage = async (
       },
     });
 
-    await logActivity(
-      "BULK_OUTAGE_DETECTED",
-      "OutageReport",
-      report.id,
-      customer.id,
-      {
-        areaId: input.areaId,
-        distinctReports: recent.length,
-      },
-    );
+    await logActivity("BULK_OUTAGE_DETECTED", "OutageReport", report.id, customer.id, {
+      areaId: input.areaId,
+      distinctReports: recent.length,
+    });
 
     const operator = await prisma.user.findFirst({
       where: {
@@ -118,29 +99,18 @@ export const reportOutage = async (
     });
 
     if (operator) {
-      await sendEmail(
-        operator.email,
-        "🚨 Bulk outage detected",
-        "outage-alert",
-        {
-          areaName: area.name,
-          count: recent.length,
-        },
-      ).catch(() => null);
+      await sendEmail(operator.email, "🚨 Bulk outage detected", "outage-alert", {
+        areaName: area.name,
+        count: recent.length,
+      }).catch(() => null);
     }
   }
 
   return report;
 };
 // list outage reports for a user - get request
-export const listForRole = async (
-  user: User,
-  query: Record<string, unknown>,
-) => {
-  const { page, limit, skip, sortBy, sortOrder, meta } = getPagination(
-    query,
-    "reportedAt",
-  );
+export const listForRole = async (user: User, query: Record<string, unknown>) => {
+  const { limit, skip, sortBy, sortOrder, meta } = getPagination(query, "reportedAt");
   const where: any = {};
   if (user.role === "CUSTOMER") where.customerId = user.id;
   if (user.role === "FIELD_TECHNICIAN") where.technicianId = user.id;
@@ -189,11 +159,7 @@ export const getByIdScoped = async (user: User, id: string) => {
 };
 
 // update outage status
-export const updateStatus = async (
-  actor: User,
-  reportId: string,
-  newStatus: string,
-) => {
+export const updateStatus = async (actor: User, reportId: string, newStatus: string) => {
   const report = await prisma.outageReport.findUnique({
     where: { id: reportId },
   });
@@ -223,20 +189,13 @@ export const updateStatus = async (
 };
 
 // assign technician to outage report - patch request
-export const assignTechnician = async (
-  actor: User,
-  reportId: string,
-  technicianId: string,
-) => {
+export const assignTechnician = async (actor: User, reportId: string, technicianId: string) => {
   const report = await prisma.outageReport.findUnique({
     where: { id: reportId },
   });
   if (!report) throw new AppError(404, "Outage report not found");
   if (report.status !== "PENDING")
-    throw new AppError(
-      409,
-      `Cannot assign — report is already ${report.status}`,
-    );
+    throw new AppError(409, `Cannot assign — report is already ${report.status}`);
 
   const technician = await prisma.user.findFirst({
     where: { id: technicianId, role: "FIELD_TECHNICIAN", isDeleted: false },
@@ -258,10 +217,8 @@ export const cancelOwnReport = async (customerId: string, reportId: string) => {
     where: { id: reportId },
   });
   if (!report) throw new AppError(404, "Outage report not found");
-  if (report.customerId !== customerId)
-    throw new AppError(403, "This is not your report");
-  if (report.status !== "PENDING")
-    throw new AppError(409, "Only PENDING reports can be cancelled");
+  if (report.customerId !== customerId) throw new AppError(403, "This is not your report");
+  if (report.status !== "PENDING") throw new AppError(409, "Only PENDING reports can be cancelled");
 
   const updated = await prisma.outageReport.update({
     where: { id: reportId },

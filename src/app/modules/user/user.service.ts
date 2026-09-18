@@ -1,12 +1,12 @@
-import { User } from '@/generated/prisma/client';
-import { prisma } from '@lib/prisma';
-import { AppError } from '@utils/AppError';
-import { cloudinary } from '@lib/cloudinary';
-import config from '@app/config';
-import { logActivity } from '@utils/activity';
-import { sendEmail } from '@lib/nodemailer';
-import bcrypt from 'bcrypt';
-import { StaffCreateInput } from './user.interface';
+import bcrypt from "bcrypt";
+import type { User } from "../../../../generated/prisma/client";
+import config from "../../config";
+import { cloudinary } from "../../lib/cloudinary";
+import { sendEmail } from "../../lib/nodemailer";
+import { prisma } from "../../lib/prisma";
+import { AppError } from "../../utils/AppError";
+import { logActivity } from "../../utils/activity";
+import type { StaffCreateInput } from "./user.interface";
 
 export async function updateProfile(userId: string, input: Record<string, unknown>) {
   return prisma.user.update({ where: { id: userId }, data: input });
@@ -16,12 +16,12 @@ export async function updateProfileImage(userId: string, file: Express.Multer.Fi
   if (!file) throw new AppError(400, 'No image file provided. Send form-data with key "image".');
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new AppError(404, 'User not found');
+  if (!user) throw new AppError(404, "User not found");
 
   if (user.imagePublicId) await cloudinary.uploader.destroy(user.imagePublicId).catch(() => null);
 
   const result = await new Promise<any>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ folder: 'bidyut/profiles' }, (error, res) =>
+    const stream = cloudinary.uploader.upload_stream({ folder: "bidyut/profiles" }, (error, res) =>
       error ? reject(error) : resolve(res),
     );
     stream.end(file.buffer);
@@ -42,13 +42,13 @@ const PROFILE_MODELS: Record<string, any> = {
 
 export async function getMyProfile(actor: User) {
   const model = PROFILE_MODELS[actor.role]?.();
-  if (!model) throw new AppError(400, 'No profile exists for this role');
+  if (!model) throw new AppError(400, "No profile exists for this role");
   return model.findUnique({ where: { userId: actor.id } }); // null until first save
 }
 
 export async function upsertMyProfile(actor: User, input: Record<string, unknown>) {
   const model = PROFILE_MODELS[actor.role]?.();
-  if (!model) throw new AppError(400, 'No profile exists for this role');
+  if (!model) throw new AppError(400, "No profile exists for this role");
   return model.upsert({
     where: { userId: actor.id },
     update: input,
@@ -56,33 +56,52 @@ export async function upsertMyProfile(actor: User, input: Record<string, unknown
   });
 }
 
-
 export const safeSelect = {
-  id: true, name: true, email: true, role: true, status: true, category: true,
-  areaId: true, imageUrl: true, mustChangePassword: true, slaActive: true, slaExpiryDate: true,
-  createdAt: true, updatedAt: true,
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  status: true,
+  category: true,
+  areaId: true,
+  imageUrl: true,
+  mustChangePassword: true,
+  slaActive: true,
+  slaExpiryDate: true,
+  createdAt: true,
+  updatedAt: true,
 } as const;
 
 export async function adminUpdateRole(actorId: string, userId: string, role: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.isDeleted) throw new AppError(404, 'User not found');
+  if (!user || user.isDeleted) throw new AppError(404, "User not found");
   const updated = await prisma.user.update({ where: { id: userId }, data: { role: role as any } });
-  await logActivity('ROLE_CHANGED', 'User', userId, actorId, { newRole: role });
+  await logActivity("ROLE_CHANGED", "User", userId, actorId, { newRole: role });
   return updated;
 }
 
 export async function adminUpdateStatus(actorId: string, userId: string, status: string) {
-  if (userId === actorId) throw new AppError(403, 'You cannot block or unblock yourself');
+  if (userId === actorId) throw new AppError(403, "You cannot block or unblock yourself");
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.isDeleted) throw new AppError(404, 'User not found');
-  const updated = await prisma.user.update({ where: { id: userId }, data: { status: status as any } });
-  await logActivity(status === 'BLOCKED' ? 'USER_BLOCKED' : 'USER_UNBLOCKED', 'User', userId, actorId);
+  if (!user || user.isDeleted) throw new AppError(404, "User not found");
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { status: status as any },
+  });
+  await logActivity(
+    status === "BLOCKED" ? "USER_BLOCKED" : "USER_UNBLOCKED",
+    "User",
+    userId,
+    actorId,
+  );
 
   sendEmail(
     user.email,
-    status === 'BLOCKED' ? 'Your BIDYUT account has been blocked' : 'Your BIDYUT account is active again',
-    'account-status',
-    { name: user.name, blocked: status === 'BLOCKED', frontendUrl: config.server.frontendUrl },
+    status === "BLOCKED"
+      ? "Your BIDYUT account has been blocked"
+      : "Your BIDYUT account is active again",
+    "account-status",
+    { name: user.name, blocked: status === "BLOCKED", frontendUrl: config.server.frontendUrl },
   ).catch(() => null);
 
   return updated;
@@ -90,50 +109,62 @@ export async function adminUpdateStatus(actorId: string, userId: string, status:
 
 export async function softDeleteUser(actorId: string, userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new AppError(404, 'User not found');
-  if (user.role === 'ADMIN') throw new AppError(403, 'Admin accounts cannot be deleted');
+  if (!user) throw new AppError(404, "User not found");
+  if (user.role === "ADMIN") throw new AppError(403, "Admin accounts cannot be deleted");
 
   const updated = await prisma.user.update({
     where: { id: userId },
-    data: { isDeleted: true, deletedAt: new Date(), email: `${user.email}.deleted.${Date.now()}`},
+    data: { isDeleted: true, deletedAt: new Date(), email: `${user.email}.deleted.${Date.now()}` },
   });
-  await logActivity('USER_SOFT_DELETED', 'User', userId, actorId);
+  await logActivity("USER_SOFT_DELETED", "User", userId, actorId);
   return updated;
 }
 
-
-
-
 const STAFF_CREATION_POLICY: Record<string, string[]> = {
-  ADMIN: ['ADMIN', 'POWER_OPERATOR'],
-  POWER_OPERATOR: ['FIELD_TECHNICIAN'],
+  ADMIN: ["ADMIN", "POWER_OPERATOR"],
+  POWER_OPERATOR: ["FIELD_TECHNICIAN"],
 };
 
 function staffProfileCreate(input: StaffCreateInput) {
-  const prefix = input.role === 'FIELD_TECHNICIAN' ? 'DES' : input.role === 'POWER_OPERATOR' ? 'OPS' : 'ADM';
+  const prefix =
+    input.role === "FIELD_TECHNICIAN" ? "DES" : input.role === "POWER_OPERATOR" ? "OPS" : "ADM";
   const employeeId = input.employeeId ?? `${prefix}-${Date.now().toString().slice(-6)}`;
 
-  if (input.role === 'FIELD_TECHNICIAN') {
-    return { technician: { create: {
-      employeeId,
-      specialization: (input.specialization ?? 'LINE') as any,
-      ...(input.phone ? { phone: input.phone } : {}),
-      ...(input.experienceYears !== undefined ? { experienceYears: input.experienceYears } : {}),
-    } } };
+  if (input.role === "FIELD_TECHNICIAN") {
+    return {
+      technician: {
+        create: {
+          employeeId,
+          specialization: (input.specialization ?? "LINE") as any,
+          ...(input.phone ? { phone: input.phone } : {}),
+          ...(input.experienceYears !== undefined
+            ? { experienceYears: input.experienceYears }
+            : {}),
+        },
+      },
+    };
   }
-  if (input.role === 'POWER_OPERATOR') {
-    return { operatorProfile: { create: {
-      employeeId,
-      ...(input.designation ? { designation: input.designation } : {}),
-      ...(input.shift ? { shift: input.shift as any } : {}),
-      ...(input.phone ? { phone: input.phone } : {}),
-    } } };
+  if (input.role === "POWER_OPERATOR") {
+    return {
+      operatorProfile: {
+        create: {
+          employeeId,
+          ...(input.designation ? { designation: input.designation } : {}),
+          ...(input.shift ? { shift: input.shift as any } : {}),
+          ...(input.phone ? { phone: input.phone } : {}),
+        },
+      },
+    };
   }
-  return { adminProfile: { create: {
-    employeeId,
-    ...(input.designation ? { designation: input.designation } : {}),
-    ...(input.phone ? { phone: input.phone } : {}),
-  } } };
+  return {
+    adminProfile: {
+      create: {
+        employeeId,
+        ...(input.designation ? { designation: input.designation } : {}),
+        ...(input.phone ? { phone: input.phone } : {}),
+      },
+    },
+  };
 }
 
 export async function createStaff(actor: User, input: StaffCreateInput) {
@@ -143,9 +174,8 @@ export async function createStaff(actor: User, input: StaffCreateInput) {
   }
 
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existing) throw new AppError(409, 'An account with this email already exists');
+  if (existing) throw new AppError(409, "An account with this email already exists");
 
-  
   const passwordHash = await bcrypt.hash(input.password, config.bcryptSaltRounds);
   const user = await prisma.user.create({
     data: {
@@ -153,7 +183,7 @@ export async function createStaff(actor: User, input: StaffCreateInput) {
       email: input.email,
       passwordHash,
       role: input.role as any,
-      authProvider: 'CREDENTIAL',
+      authProvider: "CREDENTIAL",
       emailVerified: true,
       passwordRequired: true,
       mustChangePassword: true,
@@ -162,8 +192,8 @@ export async function createStaff(actor: User, input: StaffCreateInput) {
     select: safeSelect,
   });
 
-  await logActivity('STAFF_ACCOUNT_CREATED', 'User', user.id, actor.id, { role: input.role });
-  await sendEmail(input.email, '⚡ Your BIDYUT staff account', 'staff-welcome', {
+  await logActivity("STAFF_ACCOUNT_CREATED", "User", user.id, actor.id, { role: input.role });
+  await sendEmail(input.email, "⚡ Your BIDYUT staff account", "staff-welcome", {
     name: input.name,
     role: input.role,
   }).catch(() => null);

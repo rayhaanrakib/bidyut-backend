@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import { tryCatchAsync } from '@utils/tryCatchAsync';
-import { sendResponse } from '@utils/sendResponse';
-import * as gridService from '@modules/grid/grid.service';
-import { CrudService } from './grid.interface';
+import type { Request, Response } from "express";
+import { sendResponse } from "../../utils/sendResponse";
+import { tryCatchAsync } from "../../utils/tryCatchAsync";
+import type { CrudService } from "./grid.interface";
+import * as gridService from "./grid.service";
 
 const makeCrud = <T>(label: string, service: CrudService<T>) => {
   return {
@@ -33,7 +33,7 @@ const makeCrud = <T>(label: string, service: CrudService<T>) => {
   };
 };
 
-export const zoneController = makeCrud('Zone', gridService.zoneService);
-export const substationController = makeCrud('Substation', gridService.substationService);
-export const feederController = makeCrud('Feeder', gridService.feederService);
-export const areaController = makeCrud('Area', gridService.areaService);
+export const zoneController = makeCrud("Zone", gridService.zoneService);
+export const substationController = makeCrud("Substation", gridService.substationService);
+export const feederController = makeCrud("Feeder", gridService.feederService);
+export const areaController = makeCrud("Area", gridService.areaService);

@@ -1,16 +1,14 @@
-import { Request, Response } from 'express';
-import { tryCatchAsync } from '@utils/tryCatchAsync';
-import { sendResponse } from '@utils/sendResponse';
-import { getGridStatus } from './public.service';
+import type { Request, Response } from "express";
+import { sendResponse } from "../../utils/sendResponse";
+import { tryCatchAsync } from "../../utils/tryCatchAsync";
+import { getGridStatus } from "./public.service";
 
-export const gridStatus = tryCatchAsync(
-  async (req: Request, res: Response) => {
-    const { areaId } = req.params;
+export const gridStatus = tryCatchAsync(async (req: Request, res: Response) => {
+  const { areaId } = req.params;
 
-    const { cache, data } = await getGridStatus(areaId as string);
+  const { cache, data } = await getGridStatus(areaId as string);
 
-    res.setHeader('X-Cache', cache);
+  res.setHeader("X-Cache", cache);
 
-    return sendResponse(res, 200, 'Grid status', data);
-  },
-);
+  return sendResponse(res, 200, "Grid status", data);
+});

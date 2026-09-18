@@ -1,21 +1,20 @@
-import { prisma } from '@lib/prisma';
-import { redis } from '@lib/redis';
-import { AppError } from '@utils/AppError';
+import { prisma } from "../../lib/prisma";
+import { redis } from "../../lib/redis";
+import { AppError } from "../../utils/AppError";
 
 export const getGridStatus = async (areaId: string) => {
   const cacheKey = `grid-status:${areaId}`;
- 
+
   try {
     const cached = await redis.get(cacheKey);
 
     if (cached) {
       return {
-        cache: 'HIT' as const,
+        cache: "HIT" as const,
         data: JSON.parse(cached),
       };
     }
-  } catch {
-  }
+  } catch {}
 
   const area = await prisma.area.findFirst({
     where: {
@@ -42,7 +41,7 @@ export const getGridStatus = async (areaId: string) => {
   });
 
   if (!area) {
-    throw new AppError(404, 'Area not found');
+    throw new AppError(404, "Area not found");
   }
 
   const now = new Date();
@@ -51,7 +50,7 @@ export const getGridStatus = async (areaId: string) => {
     prisma.schedule.findFirst({
       where: {
         areaId,
-        status: 'ONGOING',
+        status: "ONGOING",
         startTime: {
           lte: now,
         },
@@ -64,13 +63,13 @@ export const getGridStatus = async (areaId: string) => {
     prisma.schedule.findFirst({
       where: {
         areaId,
-        status: 'SCHEDULED',
+        status: "SCHEDULED",
         startTime: {
           gt: now,
         },
       },
       orderBy: {
-        startTime: 'asc',
+        startTime: "asc",
       },
     }),
 
@@ -78,7 +77,7 @@ export const getGridStatus = async (areaId: string) => {
       where: {
         areaId,
         status: {
-          in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS'],
+          in: ["PENDING", "ASSIGNED", "IN_PROGRESS"],
         },
       },
     }),
@@ -119,11 +118,10 @@ export const getGridStatus = async (areaId: string) => {
     await redis.set(cacheKey, JSON.stringify(data), {
       EX: 60,
     });
-  } catch {
-  }
+  } catch {}
 
   return {
-    cache: 'MISS' as const,
+    cache: "MISS" as const,
     data,
   };
 };

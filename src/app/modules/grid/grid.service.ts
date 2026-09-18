@@ -1,9 +1,9 @@
-import { prisma } from '@lib/prisma';
-import { AppError } from '@utils/AppError';
-import { getPagination } from '@utils/pagination';
-import { ZonePayload, SubstationPayload, FeederPayload, AreaPayload } from '@modules/grid/grid.interface';
+import { prisma } from "../../lib/prisma";
+import { AppError } from "../../utils/AppError";
+import { getPagination } from "../../utils/pagination";
+import type { AreaPayload, FeederPayload, SubstationPayload, ZonePayload } from "./grid.interface";
 
-type GridModel = 'zone' | 'substation' | 'feeder' | 'area';
+type GridModel = "zone" | "substation" | "feeder" | "area";
 
 export const createGridService = <T>(model: GridModel, parentField?: string) => {
   const table = (prisma as any)[model];
@@ -13,9 +13,9 @@ export const createGridService = <T>(model: GridModel, parentField?: string) => 
   };
 
   const list = async (query: Record<string, unknown>) => {
-    const { page, limit, skip, sortBy, sortOrder, meta } = getPagination(query);
+    const { limit, skip, sortBy, sortOrder, meta } = getPagination(query);
     const where: any = { isDeleted: false };
-    if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
+    if (query.search) where.name = { contains: query.search, mode: "insensitive" };
     if (parentField && query[parentField]) where[parentField] = query[parentField];
 
     const [total, items] = await Promise.all([
@@ -38,13 +38,16 @@ export const createGridService = <T>(model: GridModel, parentField?: string) => 
 
   const softDelete = async (id: string) => {
     const item = await getById(id);
-    return table.update({ where: { id }, data: { isDeleted: true, name: `${item.name} (deleted ${Date.now()})` } });
+    return table.update({
+      where: { id },
+      data: { isDeleted: true, name: `${item.name} (deleted ${Date.now()})` },
+    });
   };
 
   return { create, list, getById, update, softDelete };
 };
 
-export const zoneService = createGridService<ZonePayload>('zone');
-export const substationService = createGridService<SubstationPayload>('substation', 'zoneId');
-export const feederService = createGridService<FeederPayload>('feeder', 'substationId');
-export const areaService = createGridService<AreaPayload>('area', 'feederId');
+export const zoneService = createGridService<ZonePayload>("zone");
+export const substationService = createGridService<SubstationPayload>("substation", "zoneId");
+export const feederService = createGridService<FeederPayload>("feeder", "substationId");
+export const areaService = createGridService<AreaPayload>("area", "feederId");

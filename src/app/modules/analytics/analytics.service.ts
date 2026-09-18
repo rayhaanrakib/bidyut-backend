@@ -1,4 +1,4 @@
-import { prisma } from '@lib/prisma';
+import { prisma } from "../../lib/prisma";
 
 const DAY = 86_400_000;
 
@@ -10,18 +10,33 @@ const startOfToday = () => {
 
 export const operationalStats = async () => {
   const [
-    totalReports, pending, assigned, inProgress, resolvedToday,
-    customers, technicians, activeSla, upcomingSchedules,
+    totalReports,
+    pending,
+    assigned,
+    inProgress,
+    resolvedToday,
+    customers,
+    technicians,
+    activeSla,
+    upcomingSchedules,
   ] = await Promise.all([
     prisma.outageReport.count(),
-    prisma.outageReport.count({ where: { status: 'PENDING' } }),
-    prisma.outageReport.count({ where: { status: 'ASSIGNED' } }),
-    prisma.outageReport.count({ where: { status: 'IN_PROGRESS' } }),
-    prisma.outageReport.count({ where: { status: 'RESOLVED', resolvedAt: { gte: startOfToday() } } }),
-    prisma.user.count({ where: { role: 'CUSTOMER', isDeleted: false } }),
-    prisma.user.count({ where: { role: 'FIELD_TECHNICIAN', isDeleted: false } }),
-    prisma.user.count({ where: { slaActive: true, slaExpiryDate: { gt: new Date() } } }),
-    prisma.schedule.count({ where: { status: 'SCHEDULED', startTime: { gte: new Date() } } }),
+    prisma.outageReport.count({ where: { status: "PENDING" } }),
+    prisma.outageReport.count({ where: { status: "ASSIGNED" } }),
+    prisma.outageReport.count({ where: { status: "IN_PROGRESS" } }),
+    prisma.outageReport.count({
+      where: { status: "RESOLVED", resolvedAt: { gte: startOfToday() } },
+    }),
+    prisma.user.count({ where: { role: "CUSTOMER", isDeleted: false } }),
+    prisma.user.count({
+      where: { role: "FIELD_TECHNICIAN", isDeleted: false },
+    }),
+    prisma.user.count({
+      where: { slaActive: true, slaExpiryDate: { gt: new Date() } },
+    }),
+    prisma.schedule.count({
+      where: { status: "SCHEDULED", startTime: { gte: new Date() } },
+    }),
   ]);
 
   return {
@@ -45,7 +60,17 @@ export const heatmap = async (days = 30) => {
 
   const stats: Record<string, { reportCount: number; resolved: number; totalMinutes: number }> = {};
   for (const r of reports) {
-    const s = (stats[r.areaId] ??= { reportCount: 0, resolved: 0, totalMinutes: 0 }); // strict-safe indexing
+    let s = stats[r.areaId];
+
+    if (!s) {
+      s = {
+        reportCount: 0,
+        resolved: 0,
+        totalMinutes: 0,
+      };
+
+      stats[r.areaId] = s;
+    }
     s.reportCount++;
     if (r.resolvedAt) {
       s.resolved++;
@@ -72,10 +97,24 @@ export const heatmap = async (days = 30) => {
 export const customerSummary = async (userId: string) => {
   const [totalReports, openReports, resolvedReports, payments, user] = await Promise.all([
     prisma.outageReport.count({ where: { customerId: userId } }),
-    prisma.outageReport.count({ where: { customerId: userId, status: { in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS'] } } }),
-    prisma.outageReport.count({ where: { customerId: userId, status: 'RESOLVED' } }),
-    prisma.payment.aggregate({ where: { userId, status: 'COMPLETED' }, _sum: { amountPaisa: true }, _count: true }),
-    prisma.user.findUnique({ where: { id: userId }, select: { slaActive: true, slaExpiryDate: true } }),
+    prisma.outageReport.count({
+      where: {
+        customerId: userId,
+        status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] },
+      },
+    }),
+    prisma.outageReport.count({
+      where: { customerId: userId, status: "RESOLVED" },
+    }),
+    prisma.payment.aggregate({
+      where: { userId, status: "COMPLETED" },
+      _sum: { amountPaisa: true },
+      _count: true,
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { slaActive: true, slaExpiryDate: true },
+    }),
   ]);
 
   return {
@@ -91,9 +130,15 @@ export const customerSummary = async (userId: string) => {
 export const technicianSummary = async (userId: string) => {
   const [assigned, resolved, resolvedReports] = await Promise.all([
     prisma.outageReport.count({ where: { technicianId: userId } }),
-    prisma.outageReport.count({ where: { technicianId: userId, status: 'RESOLVED' } }),
+    prisma.outageReport.count({
+      where: { technicianId: userId, status: "RESOLVED" },
+    }),
     prisma.outageReport.findMany({
-      where: { technicianId: userId, status: 'RESOLVED', resolvedAt: { not: null } },
+      where: {
+        technicianId: userId,
+        status: "RESOLVED",
+        resolvedAt: { not: null },
+      },
       select: { reportedAt: true, resolvedAt: true },
     }),
   ]);

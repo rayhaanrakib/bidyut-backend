@@ -1,5 +1,5 @@
-import config from "@app/config";
 import bcrypt from "bcrypt";
+import config from "../config";
 import { prisma } from "../lib/prisma";
 
 const hash = (pw: string) => bcrypt.hash(pw, config.bcryptSaltRounds);

@@ -1,5 +1,5 @@
-import { v2 as Cloudinary } from 'cloudinary';
-import config from '@app/config';
+import { v2 as Cloudinary } from "cloudinary";
+import config from "../config";
 
 Cloudinary.config({
   cloud_name: config.cloudinary.cloudName,

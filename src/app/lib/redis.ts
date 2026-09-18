@@ -1,5 +1,5 @@
-import { createClient } from 'redis';
-import config from '@app/config';
+import { createClient } from "redis";
+import config from "../config";
 
 export const redis = createClient({
   username: config.redis.user,
@@ -10,4 +10,4 @@ export const redis = createClient({
   },
 });
 
-redis.on('error', (err) => console.error('Redis error:', err.message));
+redis.on("error", (err) => console.error("Redis error:", err.message));

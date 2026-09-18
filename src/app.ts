@@ -1,41 +1,44 @@
-import config from "@app/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import express, { type Application, type Request, type Response } from "express";
 import helmet from "helmet";
-import passport from "passport";
-import express, {
-  type Application,
-  type Request,
-  type Response,
-} from "express";
-import notFound from "@middleware/notFound";
-import globalErrorHandler from "@middleware/globalErrorHandler";
-import router from "./app/routes";
+
+import config from "./app/config";
+import passport from "./app/lib/passport";
+import globalErrorHandler from "./app/middleware/globalErrorHandler";
+import notFound from "./app/middleware/notFound";
+import analyticsRoutes from "./app/modules/analytics/analytics.route";
+import authRoutes from "./app/modules/auth/auth.route";
+import gridRoutes from "./app/modules/grid/grid.route";
+import internalRoutes from "./app/modules/internal/internal.route";
+import outageRoutes from "./app/modules/outage/outage.route";
+import paymentRoutes from "./app/modules/payment/payment.route";
+import publicRoutes from "./app/modules/public/public.route";
+import scheduleRoutes from "./app/modules/schedule/schedule.route";
+import userRoutes from "./app/modules/user/user.route";
+import { sendResponse } from "./app/utils/sendResponse";
 
 const app: Application = express();
 
-// CORS — allow requests from the configured frontend URL
+// Security & Parser Middlewares
+app.use(helmet());
 app.use(
   cors({
-    origin: config.server.frontendUrl,
+    origin: [config.server.frontendUrl],
     credentials: true,
   }),
 );
-// security
-app.use(helmet());
-app.use(cors({ origin: [config.server.frontendUrl], credentials: true }));
 app.use(cookieParser());
 
+// Stripe Webhook (Raw body parser must be mounted before express.json)
 app.use("/api/v1/payments/webhook", express.raw({ type: "application/json" }));
 
+// Standard body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(passport.initialize());
 
-// Health Status
-app.get("/health", (_req, res) => {
-  res.status(200).json({ message: "Bidyut Backend is running" });
-});
+// Passport middleware
+app.use(passport.initialize());
 
 // Backend home / API information
 app.get("/", (req: Request, res: Response) => {
@@ -80,17 +83,24 @@ app.get("/", (req: Request, res: Response) => {
     },
   });
 });
-// Version Status
-app.get("/api/v1", (req: Request, res: Response) =>
-  res.json({
-    success: true,
-    message: "Backend API v1 is running successfully.",
-  }),
-);
 
-// routes
-app.use("/api/v1", router);
+// Health Check
+app.get("/health", (_req, res) => {
+  sendResponse(res, 200, "BIDYUT API is running");
+});
 
+// Module Routes
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/grid", gridRoutes);
+app.use("/api/v1/outages", outageRoutes);
+app.use("/api/v1/schedules", scheduleRoutes);
+app.use("/api/v1/payments", paymentRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/public", publicRoutes);
+app.use("/api/v1/internal", internalRoutes);
+
+// Error Handling Middlewares
 app.use(notFound);
 app.use(globalErrorHandler);
 

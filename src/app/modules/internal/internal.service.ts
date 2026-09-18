@@ -1,7 +1,7 @@
-import { prisma } from "@lib/prisma";
-import { sendEmail } from "@lib/nodemailer";
-import { logActivity } from "@utils/activity";
-import config from "@app/config";
+import config from "../../config";
+import { sendEmail } from "../../lib/nodemailer";
+import { prisma } from "../../lib/prisma";
+import { logActivity } from "../../utils/activity";
 
 export const dispatchNotificationsService = async () => {
   const now = new Date();
@@ -30,9 +30,7 @@ export const dispatchNotificationsService = async () => {
   let emailsSent = 0;
 
   for (const schedule of schedules) {
-    const areas = schedule.areaId
-      ? [schedule.area]
-      : (schedule.feeder?.areas ?? []);
+    const areas = schedule.areaId ? [schedule.area] : (schedule.feeder?.areas ?? []);
 
     for (const area of areas) {
       const customers = await prisma.user.findMany({
@@ -81,9 +79,7 @@ export const dispatchNotificationsService = async () => {
   }
 
   // Flag SLA breaches
-  const breachBefore = new Date(
-    now.getTime() - config.slaBreachHours * 3_600_000,
-  );
+  const breachBefore = new Date(now.getTime() - config.slaBreachHours * 3_600_000);
 
   const breached = await prisma.outageReport.updateMany({
     where: {

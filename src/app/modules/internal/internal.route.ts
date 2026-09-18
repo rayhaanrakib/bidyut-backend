@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { dispatchNotifications } from '@modules/internal/internal.controller';
+import { Router } from "express";
+import { dispatchNotifications } from "./internal.controller";
 
 const router = Router();
-router.post('/dispatch-notifications', dispatchNotifications);
+router.post("/dispatch-notifications", dispatchNotifications);
 
 export default router;
