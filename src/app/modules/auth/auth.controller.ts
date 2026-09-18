@@ -15,7 +15,11 @@ export const register = tryCatchAsync(async (req: Request, res: Response) => {
 export const verifyOtp = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.verifyOtp(req.body);
   setAuthCookies(res, result.accessToken, result.refreshToken);
-  res.status(201).json({ success: true, message: "Account created successfully", data: result });
+  res.status(201).json({
+    success: true,
+    message: "Account created successfully",
+    data: result,
+  });
 });
 
 export const login = (req: Request, res: Response, next: NextFunction) => {
@@ -25,19 +29,25 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
     (err: Error | null, user: User | null | undefined, info: any | null) => {
       if (err) return next(err);
       if (!user)
-        return res
-          .status(401)
-          .json({ success: false, message: info?.message || "Invalid credentials" });
+        return res.status(401).json({
+          success: false,
+          message: info?.message || "Invalid credentials",
+        });
 
       const tokens = authService.issueTokens(user);
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-      sendResponse(res, 200, "Login successful", { user: authService.safeUser(user), ...tokens });
+      sendResponse(res, 200, "Login successful", {
+        user: authService.safeUser(user),
+        ...tokens,
+      });
     },
   )(req, res, next);
 };
 
 export const me = tryCatchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, 200, "Current user profile", { user: authService.safeUser(req.user as User) });
+  sendResponse(res, 200, "Current user profile", {
+    user: authService.safeUser(req.user as User),
+  });
 });
 
 export const refresh = tryCatchAsync(async (req: Request, res: Response) => {
@@ -70,13 +80,13 @@ export const googleCallback = (req: Request, res: Response, next: NextFunction) 
   passport.authenticate("google", { session: false }, (err, user, info) => {
     if (err || !user) {
       console.error("Google login failed:", err?.message || info?.message);
-      return res.redirect(`${config.server.frontendUrl}/login?error=google_failed`);
+      return res.redirect(`${config.server.backendUrl}/api/v1/auth/login?error=google_failed`);
     }
     const tokens = authService.issueTokens(user);
     const googleIdToken = (req as any).googleIdToken;
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken, googleIdToken);
     const fragment = `#accessToken=${encodeURIComponent(tokens.accessToken)}&refreshToken=${encodeURIComponent(tokens.refreshToken)}${googleIdToken ? `&idToken=${encodeURIComponent(googleIdToken)}` : ""}`;
-    res.redirect(`${config.server.frontendUrl}/oauth/success${fragment}`);
+    res.redirect(`${config.server.backendUrl}/api/v1/auth/oauth/success${fragment}`);
   })(req, res, next);
 };
 
@@ -100,13 +110,3 @@ export const googleIdTokenLogin = tryCatchAsync(async (req: Request, res: Respon
     result,
   );
 });
-
-export const oauthSuccess = (_req: Request, res: Response) => {
-  res
-    .type("html")
-    .send(`<!doctype html><html><body style="font-family: monospace; background: #111; color: #eee;">
-<h3>Google login successful — copy for Postman</h3><pre id="out">reading…</pre><script>
-const h = new URLSearchParams(location.hash.slice(1));
-out.textContent = JSON.stringify({ accessToken: h.get('accessToken'), refreshToken: h.get('refreshToken'), idToken: h.get('idToken') }, null, 2);
-</script></body></html>`);
-};

@@ -1,8 +1,8 @@
+import crypto from "node:crypto";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { type Application, type Request, type Response } from "express";
 import helmet from "helmet";
-
 import config from "./app/config";
 import passport from "./app/lib/passport";
 import globalErrorHandler from "./app/middleware/globalErrorHandler";
@@ -21,7 +21,21 @@ import { sendResponse } from "./app/utils/sendResponse";
 const app: Application = express();
 
 // Security & Parser Middlewares
-app.use(helmet());
+app.use((req, res, next) => {
+  const nonce = crypto.randomBytes(16).toString("base64");
+
+  res.locals.cspNonce = nonce;
+
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", `'nonce-${nonce}'`],
+      },
+    },
+  })(req, res, next);
+});
+
 app.use(
   cors({
     origin: [config.server.frontendUrl],

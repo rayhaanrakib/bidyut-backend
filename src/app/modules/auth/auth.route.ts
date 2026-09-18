@@ -3,6 +3,7 @@ import checkAuth from "../../middleware/checkAuth";
 import { authLimiter } from "../../middleware/rateLimiter";
 import validateRequest from "../../middleware/validateRequest";
 import * as authController from "./auth.controller";
+import { authUtils } from "./auth.utils";
 import {
   forgotPasswordSchema,
   googleLoginSchema,
@@ -24,7 +25,7 @@ router.get("/google", authController.googleLogin);
 router.get("/google/callback", authController.googleCallback);
 // Google login via ID token
 router.post("/google", validateRequest(googleLoginSchema), authController.googleIdTokenLogin);
-router.get("/oauth/success", authController.oauthSuccess);
+router.get("/oauth/success", authUtils.oauthSuccess);
 
 router.post(
   "/forgot-password",

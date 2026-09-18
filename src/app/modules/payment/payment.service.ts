@@ -23,6 +23,7 @@ export const createCheckoutSession = async (customer: User, input: CheckoutInput
     if (report.isPriority) throw new AppError(409, "This report already has priority restoration");
     outageReportId = report.id;
   }
+  if (customer.slaActive) throw new AppError(409, "You already have SLA subscription");
 
   const amountBDT = isPriority ? config.stripe.priorityPrice : config.stripe.slaPrice;
   const amountPaisa = amountBDT * 100;
@@ -54,8 +55,8 @@ export const createCheckoutSession = async (customer: User, input: CheckoutInput
       },
     ],
     metadata: { paymentId: payment.id },
-    success_url: `${config.server.backendUrl}/payment/success?transactionId=${transactionId}`,
-    cancel_url: `${config.server.backendUrl}/payment/cancel`,
+    success_url: `${config.server.backendUrl}/api/v1/payments/success`,
+    cancel_url: `${config.server.backendUrl}/api/v1/payments/cancel`,
   });
 
   await prisma.payment.update({

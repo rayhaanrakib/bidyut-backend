@@ -2,8 +2,8 @@ import { type Request, type Response, Router } from "express";
 import checkAuth from "../../middleware/checkAuth";
 import { paymentLimiter } from "../../middleware/rateLimiter";
 import validateRequest from "../../middleware/validateRequest";
-import { sendResponse } from "../../utils/sendResponse";
 import * as paymentController from "./payment.controller";
+import { paymentUtils } from "./payment.utils";
 import { checkoutSchema, refundSchema } from "./payment.validation";
 
 const router = Router();
@@ -18,11 +18,12 @@ router.post(
 router.post("/webhook", paymentController.stripeWebhook);
 
 // payment status backend test redirect
-router.post("/success", (_req: Request, res: Response) => {
-  sendResponse(res, 200, "Payment Completed Successfully", null);
+router.get("/success", (_req: Request, res: Response) => {
+  paymentUtils.paymentSuccessPage(res);
 });
-router.post("/cancel", (_req: Request, res: Response) => {
-  sendResponse(res, 400, "Payment Cancelled", null);
+
+router.get("/cancel", (_req: Request, res: Response) => {
+  paymentUtils.paymentCancelPage(res);
 });
 
 router.get("/my-payments", checkAuth("CUSTOMER"), paymentController.myPayments);
