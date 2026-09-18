@@ -1,39 +1,40 @@
 model User {
-  id            String       @id @default(uuid())
-  name          String
-  email         String       @unique
-  passwordHash  String? // null for Google-only accounts
-  googleId      String?      @unique // set on first Google OAuth login
-  authProvider     AuthProvider @default(CREDENTIAL) // how the account was born
-  emailVerified    Boolean      @default(false) // flips to true at OTP verification
-  passwordRequired Boolean      @default(true) // false = Google-only account (no password set yet)
-  role          UserRole     @default(CUSTOMER)
-  status        UserStatus   @default(ACTIVE)
-  category      UserCategory @default(RESIDENTIAL)
-  areaId        String?
-  area          Area?        @relation(fields: [areaId], references: [id])
-  imageUrl          String       @default("") // Cloudinary URL (display)
-  imagePublicId     String       @default("") // Cloudinary id — deletion without URL parsing
-  mustChangePassword Boolean     @default(false) // created staff set their own password at first login
-  deletedAt         DateTime? // stamped when soft-deleted
-  slaActive     Boolean      @default(false)
-  slaExpiryDate DateTime?
-  isDeleted     Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                 String       @id @default(uuid())
+  name               String
+  email              String       @unique
+  passwordHash       String? // null for Google-only accounts
+  googleId           String?      @unique // set on first Google OAuth login
+  authProvider       AuthProvider @default(CREDENTIAL) // how the account was born
+  emailVerified      Boolean      @default(false) // flips to true at OTP verification
+  passwordRequired   Boolean      @default(true) // false = Google-only account (no password set yet)
+  role               UserRole     @default(CUSTOMER)
+  status             UserStatus   @default(ACTIVE)
+  category           UserCategory @default(RESIDENTIAL)
+  areaId             String?
+  area               Area?        @relation(fields: [areaId], references: [id])
+  imageUrl           String       @default("") // Cloudinary URL (display)
+  imagePublicId      String       @default("") // Cloudinary id — deletion without URL parsing
+  mustChangePassword Boolean      @default(false) // created staff set their own password at first login
+  deletedAt          DateTime? // stamped when soft-deleted
+  slaActive          Boolean      @default(false)
+  slaExpiryDate      DateTime?
+  isDeleted          Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
-  reports          OutageReport[] @relation("CustomerReports")
-  assignedTasks    OutageReport[] @relation("TechnicianTasks")
-  payments         Payment[]
-  activityLogs        ActivityLog[]
-  notifications    Notification[]
-  createdSchedules Schedule[]
+  reports              OutageReport[]      @relation("CustomerReports")
+  assignedTasks        OutageReport[]      @relation("TechnicianTasks")
+  payments             Payment[]
+  activityLogs         ActivityLog[]
+  notifications        Notification[]
+  createdSchedules     Schedule[]
+  reviewedApplications TechnicianProfile[] @relation("TechnicianApplicationReviewer")
 
   // 1:1 role profiles — exactly one exists per user, matching the role
-  customerProfile  CustomerProfile?
-  technician       TechnicianProfile?
-  operatorProfile  OperatorProfile?
-  adminProfile     AdminProfile?
+  customerProfile   CustomerProfile?
+  technicianProfile TechnicianProfile?
+  operatorProfile   OperatorProfile?
+  adminProfile      AdminProfile?
 
   @@index([role])
   @@index([areaId])

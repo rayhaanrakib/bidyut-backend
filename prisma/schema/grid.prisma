@@ -1,10 +1,10 @@
 model Zone {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String       @id @default(uuid())
+  name        String       @unique
   code        String?
-  isDeleted   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   substations Substation[]
 }
 
@@ -39,15 +39,15 @@ model Feeder {
 }
 
 model Area {
-  id        String   @id @default(uuid())
+  id        String         @id @default(uuid())
   name      String
   feederId  String
-  feeder    Feeder   @relation(fields: [feederId], references: [id])
+  feeder    Feeder         @relation(fields: [feederId], references: [id])
   latitude  Float?
   longitude Float?
-  isDeleted Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isDeleted Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   users     User[]
   reports   OutageReport[]
   schedules Schedule[]

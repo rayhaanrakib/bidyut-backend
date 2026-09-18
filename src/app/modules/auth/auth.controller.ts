@@ -5,6 +5,7 @@ import passport from "../../lib/passport";
 import { clearAuthCookies, setAuthCookies } from "../../utils/authCookie";
 import { tryCatchAsync } from "../../utils/tryCatchAsync";
 import * as authService from "./auth.service";
+import { sendResponse } from "../../utils/sendResponse";
 
 export const register = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.register(req.body);
@@ -30,21 +31,13 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
 
       const tokens = authService.issueTokens(user);
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-      res.json({
-        success: true,
-        message: "Login successful",
-        data: { user: authService.safeUser(user), ...tokens },
-      });
+      sendResponse(res, 200, "Login successful", { user: authService.safeUser(user), ...tokens });
     },
   )(req, res, next);
 };
 
 export const me = tryCatchAsync(async (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: "Current user profile",
-    data: { user: authService.safeUser(req.user as User) },
-  });
+  sendResponse(res, 200, "Current user profile", { user: authService.safeUser(req.user as User) });
 });
 
 export const refresh = tryCatchAsync(async (req: Request, res: Response) => {
@@ -52,12 +45,12 @@ export const refresh = tryCatchAsync(async (req: Request, res: Response) => {
     req.cookies?.refreshToken || req.body?.refreshToken,
   );
   setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-  res.json({ success: true, message: "New tokens issued", data: tokens });
+  sendResponse(res, 200, "New tokens issued", tokens);
 });
 
 export const logout = tryCatchAsync(async (_req: Request, res: Response) => {
   clearAuthCookies(res);
-  res.json({ success: true, message: "Logged out successfully" });
+  sendResponse(res, 200, "Logged out successfully");
 });
 
 export const googleLogin = (_req: Request, res: Response) => {
@@ -89,24 +82,20 @@ export const googleCallback = (req: Request, res: Response, next: NextFunction) 
 
 export const forgotPassword = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.forgotPassword(req.body);
-  res.json({ success: true, message: result.message });
+  sendResponse(res, 200, result.message);
 });
 
 export const resetPassword = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.resetPassword(req.body);
-  res.json({ success: true, message: result.message });
+  sendResponse(res, 200, result.message);
 });
 
 export const googleIdTokenLogin = tryCatchAsync(async (req: Request, res: Response) => {
   const result = await authService.googleIdTokenLogin(req.body);
   setAuthCookies(res, result.accessToken, result.refreshToken);
-  res.json({
-    success: true,
-    message: result.isNewUser
+  sendResponse(res, 200, result.isNewUser
       ? "Account created and logged in with Google"
-      : "Google login successful",
-    data: result,
-  });
+      : "Google login successful", result);
 });
 
 export const oauthSuccess = (_req: Request, res: Response) => {

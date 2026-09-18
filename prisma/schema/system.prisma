@@ -13,14 +13,14 @@ model ActivityLog {
 }
 
 model Notification {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-  type   String
-  title  String
-  body   String
-  channel String @default("EMAIL")
-  sentAt DateTime @default(now())
+  id      String   @id @default(uuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id])
+  type    String
+  title   String
+  body    String
+  channel String   @default("EMAIL")
+  sentAt  DateTime @default(now())
 
   @@index([userId])
 }

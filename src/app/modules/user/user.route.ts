@@ -8,6 +8,8 @@ import {
   adminUpdateStatusSchema,
   staffCreateSchema,
   updateProfileSchema,
+  applyTechnicianSchema,
+  decideApplicationSchema,
 } from "./user.validation";
 
 const router = Router();
@@ -43,5 +45,11 @@ router.post(
   validateRequest(staffCreateSchema),
   userController.createStaff,
 );
+
+
+// apply as technician
+router.post('/apply-as-technician', checkAuth('CUSTOMER'), upload.single('resume'), validateRequest(applyTechnicianSchema), userController.applyAsTechnician);
+router.get('/technician-applications', checkAuth('ADMIN'), userController.listTechnicianApplications);
+router.patch('/technician-applications/:userId', checkAuth('ADMIN'), validateRequest(decideApplicationSchema), userController.decideTechnicianApplication);
 
 export default router;

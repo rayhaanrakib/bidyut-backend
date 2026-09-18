@@ -15,16 +15,23 @@ model CustomerProfile {
 }
 
 model TechnicianProfile {
-  id              String                   @id @default(uuid())
-  userId          String                   @unique // one profile per technician, ever
-  user            User                     @relation(fields: [userId], references: [id])
-  employeeId      String                   @unique // e.g. DES-0142
-  specialization  TechnicianSpecialization @default(LINE)
-  experienceYears Int?
-  certification   String?
-  phone           String?
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
+  id                String                   @id @default(uuid())
+  userId            String                   @unique // one profile per technician
+  user              User                     @relation(fields: [userId], references: [id])
+  employeeId        String?                  @unique // assigned on approval
+  specialization    TechnicianSpecialization @default(LINE)
+  experienceYears   Int?
+  certification     String?
+  phone             String?
+  applicationStatus ApplicationStatus        @default(APPROVED)
+  resumeUrl         String?
+  resumePublicId    String?
+  rejectionReason   String?
+  reviewedById      String?
+  reviewedBy        User?                    @relation("TechnicianApplicationReviewer", fields: [reviewedById], references: [id])
+  reviewedAt        DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
 }
 
 model OperatorProfile {

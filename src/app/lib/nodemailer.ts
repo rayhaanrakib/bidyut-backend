@@ -1,6 +1,6 @@
 import path from "node:path";
 import ejs from "ejs";
-import nodemailer from "nodemailer";
+import nodemailer, { Attachment } from "nodemailer";
 import config from "../config";
 
 export const transporter = nodemailer.createTransport({
@@ -13,6 +13,7 @@ export async function sendEmail(
   subject: string,
   template: string,
   data: Record<string, unknown>,
+  attachments?: Attachment[],
 ) {
   if (!config.smtp.user || !config.smtp.pass) {
     console.warn(`SMTP not configured — skipped email "${subject}" to ${to}`);
@@ -20,5 +21,5 @@ export async function sendEmail(
   }
   const file = path.join(process.cwd(), "src", "app", "templates", `${template}.ejs`);
   const html = await ejs.renderFile(file, data);
-  await transporter.sendMail({ from: `"BIDYUT" <${config.smtp.sender}>`, to, subject, html });
+  await transporter.sendMail({ from: `"BIDYUT" <${config.smtp.sender}>`, to, subject, html, attachments });
 }

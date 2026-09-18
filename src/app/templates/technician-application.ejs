@@ -1,0 +1,12 @@
+<div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px;">
+  <h2 style="color: #f5a623;">⚡ BIDYUT — technician application <%= approved ? 'approved' : 'update' %></h2>
+  <p>Hello <%= name %>,</p>
+  <% if (approved) { %>
+    <p>Congratulations — your technician application was <strong>approved</strong>! Your account is now a <strong>Field Technician</strong> account: log in and your dashboard switches to the technician view (assigned jobs, status updates, closure notes).</p>
+  <% } else { %>
+    <p>After review, your technician application was <strong>not approved</strong> this time.</p>
+    <p><strong>Reason:</strong> <%= reason %></p>
+    <p>You can apply again any time — your next application will be reviewed fresh.</p>
+  <% } %>
+  <p style="color: #999; font-size: 12px;">BIDYUT grid operations</p>
+</div>

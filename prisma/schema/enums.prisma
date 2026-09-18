@@ -29,6 +29,12 @@ enum TechnicianSpecialization {
   GENERATION
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum OperatorShift {
   MORNING
   EVENING

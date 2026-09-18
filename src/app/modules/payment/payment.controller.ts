@@ -31,7 +31,7 @@ export const stripeWebhook = tryCatchAsync(async (req: Request, res: Response) =
     }
   }
 
-  res.json({ received: true });
+  sendResponse(res, 200, "Webhook received");
 });
 
 export const myPayments = tryCatchAsync(async (req: Request, res: Response) => {
