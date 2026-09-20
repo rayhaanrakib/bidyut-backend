@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { UserCategory, type User } from "../../../../generated/prisma/client";
+import { type User, UserCategory } from "../../../../generated/prisma/client";
 import config from "../../config";
 import { googleClient } from "../../lib/google";
 import { sendEmail } from "../../lib/nodemailer";
@@ -23,7 +23,6 @@ type PendingRegistration = {
   category?: string;
   areaId?: string;
 };
-
 
 async function otpSave(key: string, value: string) {
   try {

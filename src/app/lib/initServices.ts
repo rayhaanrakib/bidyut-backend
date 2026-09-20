@@ -1,8 +1,8 @@
 import config from "../config";
+import { seed } from "../utils/seed";
 import { transporter } from "./nodemailer";
 import { prisma } from "./prisma";
 import { redis } from "./redis";
-import { seed } from "../utils/seed";
 
 let initializationPromise: Promise<void> | null = null;
 

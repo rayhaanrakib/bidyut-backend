@@ -1,12 +1,7 @@
 import crypto from "node:crypto";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, {
-  type Application,
-  type NextFunction,
-  type Request,
-  type Response,
-} from "express";
+import express, { type Application, type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import config from "./app/config";
 import { initializeServices } from "./app/lib/initServices";

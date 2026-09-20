@@ -26,7 +26,6 @@ router.patch("/me/profile", checkAuth(), userController.updateMyProfile);
 
 router.get("/", checkAuth("ADMIN", "POWER_OPERATOR"), userController.getAllUsers);
 
-
 router.post(
   "/apply-as-technician",
   checkAuth("CUSTOMER"),
