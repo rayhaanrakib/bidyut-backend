@@ -1,13 +1,8 @@
-import { createClient } from "redis";
+// lib/redis.ts
+import { Redis } from "@upstash/redis";
 import config from "../config";
 
-export const redis = createClient({
-  username: config.redis.user,
-  password: config.redis.password,
-  socket: {
-    host: config.redis.host,
-    port: config.redis.port,
-  },
+export const redis = new Redis({
+  url: config.redis.url,
+  token: config.redis.token,
 });
-
-redis.on("error", (err) => console.error("Redis error:", err.message));

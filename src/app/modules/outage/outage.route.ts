@@ -13,7 +13,7 @@ router.post(
   outageController.report,
 );
 router.get("/", checkAuth(), outageController.list);
-router.get("/my-reports", checkAuth("CUSTOMER"), outageController.list);
+router.get("/my-reports", checkAuth("CUSTOMER", "FIELD_TECHNICIAN"), outageController.list);
 router.get("/:id", checkAuth(), outageController.getById);
 router.patch(
   "/:id/status",

@@ -25,6 +25,27 @@ router.get("/me/profile", checkAuth(), userController.getMyProfile);
 router.patch("/me/profile", checkAuth(), userController.updateMyProfile);
 
 router.get("/", checkAuth("ADMIN", "POWER_OPERATOR"), userController.getAllUsers);
+
+
+router.post(
+  "/apply-as-technician",
+  checkAuth("CUSTOMER"),
+  upload.single("resume"),
+  validateRequest(applyTechnicianSchema),
+  userController.applyAsTechnician,
+);
+router.get(
+  "/technician-applications",
+  checkAuth("ADMIN"),
+  userController.listTechnicianApplications,
+);
+router.patch(
+  "/technician-applications/:userId",
+  checkAuth("ADMIN"),
+  validateRequest(decideApplicationSchema),
+  userController.decideTechnicianApplication,
+);
+
 router.get("/:id", checkAuth("ADMIN"), userController.getSingleUser);
 router.patch(
   "/:id/role",
@@ -44,26 +65,6 @@ router.post(
   checkAuth("ADMIN", "POWER_OPERATOR"),
   validateRequest(staffCreateSchema),
   userController.createStaff,
-);
-
-// apply as technician
-router.post(
-  "/apply-as-technician",
-  checkAuth("CUSTOMER"),
-  upload.single("resume"),
-  validateRequest(applyTechnicianSchema),
-  userController.applyAsTechnician,
-);
-router.get(
-  "/technician-applications",
-  checkAuth("ADMIN"),
-  userController.listTechnicianApplications,
-);
-router.patch(
-  "/technician-applications/:userId",
-  checkAuth("ADMIN"),
-  validateRequest(decideApplicationSchema),
-  userController.decideTechnicianApplication,
 );
 
 export default router;

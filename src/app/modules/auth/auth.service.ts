@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import type { User } from "../../../../generated/prisma/client";
+import { UserCategory, type User } from "../../../../generated/prisma/client";
 import config from "../../config";
 import { googleClient } from "../../lib/google";
 import { sendEmail } from "../../lib/nodemailer";
@@ -15,11 +15,21 @@ import {
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// Redis helper that fails politely if Redis is down (edge case: never crash the app)
+type PendingRegistration = {
+  name: string;
+  email: string;
+  password?: string;
+  passwordHash: string;
+  category?: string;
+  areaId?: string;
+};
+
+
 async function otpSave(key: string, value: string) {
   try {
-    await redis.set(key, value, { EX: 600 }); // expires in 10 minutes
-  } catch {
+    await redis.set(key, value, { ex: 600 }); // expires in 10 minutes
+  } catch (err) {
+    console.error(`otpSave failed for key "${key}":`, err); // log the real cause
     throw new AppError(503, "OTP service is temporarily unavailable. Please try again.");
   }
 }
@@ -43,7 +53,7 @@ export async function register(input: {
   name: string;
   email: string;
   password: string;
-  category?: string;
+  category?: UserCategory;
   areaId?: string;
 }) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
@@ -62,24 +72,29 @@ export async function register(input: {
 
 export async function verifyOtp(input: { email: string; otp: string }) {
   const savedOtp = await redis.get(`otp:${input.email}`);
-  if (!savedOtp || savedOtp !== input.otp) throw new AppError(400, "Invalid or expired OTP");
+  // Upstash auto-parses numeric strings, so compare as strings
+  if (savedOtp === null || String(savedOtp) !== input.otp)
+    throw new AppError(400, "Invalid or expired OTP");
 
   const pendingRaw = await redis.get(`pending:${input.email}`);
   if (!pendingRaw) throw new AppError(400, "Registration session expired. Please register again.");
 
-  const pending = JSON.parse(pendingRaw);
+  // Upstash auto-parses JSON, so this is usually already an object
+  const pending: PendingRegistration =
+    typeof pendingRaw === "string" ? JSON.parse(pendingRaw) : (pendingRaw as PendingRegistration);
+
   const user = await prisma.user.create({
     data: {
       name: pending.name,
       email: pending.email,
       passwordHash: pending.passwordHash,
-      category: pending.category ?? "RESIDENTIAL",
+      category: (pending.category as UserCategory | undefined) ?? UserCategory.RESIDENTIAL,
       areaId: pending.areaId ?? null,
       role: "CUSTOMER",
       emailVerified: true, // the OTP just proved this email
     },
   });
-  await redis.del([`otp:${input.email}`, `pending:${input.email}`]); // node-redis takes an array
+  await redis.del(`otp:${input.email}`, `pending:${input.email}`);
 
   // 🎉 welcome email — fire-and-forget: signup NEVER fails because an email did
   sendEmail(user.email, "Welcome to BIDYUT ⚡ Your account is ready", "welcome", {
@@ -120,7 +135,9 @@ export async function forgotPassword(input: { email: string }) {
 
 export async function resetPassword(input: { email: string; otp: string; newPassword: string }) {
   const savedOtp = await redis.get(`reset:${input.email}`);
-  if (!savedOtp || savedOtp !== input.otp) throw new AppError(400, "Invalid or expired OTP");
+  // Upstash auto-parses numeric strings, so compare as strings
+  if (savedOtp === null || String(savedOtp) !== input.otp)
+    throw new AppError(400, "Invalid or expired OTP");
 
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user) throw new AppError(404, "No account found with this email");

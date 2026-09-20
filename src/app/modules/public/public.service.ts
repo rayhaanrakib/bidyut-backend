@@ -11,7 +11,7 @@ export const getGridStatus = async (areaId: string) => {
     if (cached) {
       return {
         cache: "HIT" as const,
-        data: JSON.parse(cached),
+        data: typeof cached === "string" ? JSON.parse(cached) : cached,
       };
     }
   } catch {}
@@ -116,7 +116,7 @@ export const getGridStatus = async (areaId: string) => {
 
   try {
     await redis.set(cacheKey, JSON.stringify(data), {
-      EX: 60,
+      ex: 60,
     });
   } catch {}
 

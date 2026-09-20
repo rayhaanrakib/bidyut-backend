@@ -1,9 +1,15 @@
 import crypto from "node:crypto";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { type Application, type Request, type Response } from "express";
+import express, {
+  type Application,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import helmet from "helmet";
 import config from "./app/config";
+import { initializeServices } from "./app/lib/initServices";
 import passport from "./app/lib/passport";
 import globalErrorHandler from "./app/middleware/globalErrorHandler";
 import notFound from "./app/middleware/notFound";
@@ -19,6 +25,8 @@ import userRoutes from "./app/modules/user/user.route";
 import { sendResponse } from "./app/utils/sendResponse";
 
 const app: Application = express();
+
+app.set("trust proxy", 1);
 
 // Security & Parser Middlewares
 app.use((req, res, next) => {
@@ -54,6 +62,15 @@ app.use(express.urlencoded({ extended: true }));
 // Passport middleware
 app.use(passport.initialize());
 
+app.use(async (_req: Request, _res: Response, next: NextFunction) => {
+  try {
+    await initializeServices();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Backend home / API information
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
@@ -75,12 +92,16 @@ app.get("/", (req: Request, res: Response) => {
       language: "TypeScript",
       database: "PostgreSQL",
       orm: "Prisma",
+      cache: "Upstash Redis",
+      smtp: "Nodemailer",
+      authentication: "Passport.js",
+      rate_limiter: "Express Rate-Limit",
+      validation: "Zod",
       hosting: "Vercel",
     },
 
     api: {
       version: "v1",
-      documentation: "Not Ready Yet",
       health_check: "/health",
     },
 
