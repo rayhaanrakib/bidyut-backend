@@ -6,10 +6,8 @@ import { prisma } from "./app/lib/prisma";
 const PORT = config.server.port;
 
 const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV !== undefined;
-const isRender = process.env.RENDER === "true" || process.env.RENDER_EXTERNAL_URL !== undefined;
-const isDirectEntry = import.meta.main || isRender;
 
-if (!isVercel && isDirectEntry) {
+if (!isVercel && import.meta.main) {
   (async () => {
     try {
       await initializeServices();
