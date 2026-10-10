@@ -80,13 +80,13 @@ export const googleCallback = (req: Request, res: Response, next: NextFunction) 
   passport.authenticate("google", { session: false }, (err, user, info) => {
     if (err || !user) {
       console.error("Google login failed:", err?.message || info?.message);
-      return res.redirect(`${config.server.backendUrl}/api/v1/auth/login?error=google_failed`);
+      return res.redirect(`${config.server.frontendUrl}/login?error=google_failed`);
     }
     const tokens = authService.issueTokens(user);
     const googleIdToken = (req as any).googleIdToken;
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken, googleIdToken);
     const fragment = `#accessToken=${encodeURIComponent(tokens.accessToken)}&refreshToken=${encodeURIComponent(tokens.refreshToken)}${googleIdToken ? `&idToken=${encodeURIComponent(googleIdToken)}` : ""}`;
-    res.redirect(`${config.server.backendUrl}/api/v1/auth/oauth/success${fragment}`);
+    res.redirect(`${config.server.frontendUrl}/oauth/callback${fragment}`);
   })(req, res, next);
 };
 
