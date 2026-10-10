@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: bidyut-backend
+    runtime: node
+    plan: free
+    buildCommand: bun run build
+    preDeployCommand: bun run db:deploy
+    startCommand: bun start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
