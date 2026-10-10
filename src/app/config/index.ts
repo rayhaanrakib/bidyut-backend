@@ -48,11 +48,6 @@ export default {
     user: process.env.SMTP_USER!,
     pass: process.env.SMTP_PASSWORD!,
     sender: process.env.EMAIL_SENDER || process.env.SMTP_USER!,
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === "true",
-    requireTls: process.env.SMTP_REQUIRE_TLS !== "false",
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT) || 10000,
   },
 
   cloudinary: {
