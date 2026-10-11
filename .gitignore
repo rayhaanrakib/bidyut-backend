@@ -4,5 +4,5 @@ dist/
 generated/
 .postman
 postman/
-
+.vscode/
 .vercel
