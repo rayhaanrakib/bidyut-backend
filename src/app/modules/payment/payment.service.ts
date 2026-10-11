@@ -163,6 +163,27 @@ export const getByTransactionId = async (user: User, transactionId: string) => {
   return payment;
 };
 
+export const listAllPayments = async (query: Record<string, unknown>) => {
+  const { limit, skip, sortBy, sortOrder, meta } = getPagination(query);
+  const where: any = {};
+  if (query.status) where.status = query.status;
+  if (query.type) where.type = query.type;
+  if (query.userId) where.userId = query.userId;
+
+  const [total, items] = await Promise.all([
+    prisma.payment.count({ where }),
+    prisma.payment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+      include: { user: { select: { id: true, name: true, email: true, role: true } } },
+    }),
+  ]);
+  return { items, meta: meta(total) };
+};
+
+
 export const refundPayment = async (actorId: string, transactionId: string) => {
   const payment = await prisma.payment.findUnique({ where: { transactionId } });
   if (!payment) throw new AppError(404, "Payment not found");
