@@ -27,8 +27,8 @@ router.get("/cancel", (_req: Request, res: Response) => {
 });
 
 router.get("/my-payments", checkAuth("CUSTOMER"), paymentController.myPayments);
+router.get("/all", checkAuth("ADMIN"), paymentController.allPayments);
 router.get("/:transactionId", checkAuth(), paymentController.getByTransaction);
-router.get("/payments", checkAuth("ADMIN"), paymentController.allPayments);
 router.post("/refund", checkAuth("ADMIN"), validateRequest(refundSchema), paymentController.refund);
 
 export default router;
