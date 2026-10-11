@@ -55,8 +55,8 @@ export const createCheckoutSession = async (customer: User, input: CheckoutInput
       },
     ],
     metadata: { paymentId: payment.id },
-    success_url: `${config.server.frontendUrl}/payment/success`,
-    cancel_url: `${config.server.frontendUrl}/payment/cancel`,
+    success_url: `${config.server.frontendUrl}/payment/success?transactionId=${transactionId}`,
+    cancel_url: `${config.server.frontendUrl}/payment/cancel?transactionId=${transactionId}`,
   });
 
   await prisma.payment.update({
